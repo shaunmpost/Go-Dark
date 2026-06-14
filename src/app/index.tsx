@@ -2,10 +2,11 @@
  * Tonight — the v1 screen. Open the app, get the verdict. Everything here is
  * driven by `NightData`; GO / MAYBE / SKIP are mock-exact reference nights and
  * LIVE is the real, end-to-end computed night (astronomy + weather) for the
- * hardcoded location.
+ * active location (device, or a selected saved location).
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DevStateSwitcher } from '@/components/DevStateSwitcher';
 import { NightRibbon } from '@/components/NightRibbon';
@@ -14,43 +15,64 @@ import { Scorecard } from '@/components/Scorecard';
 import { TopBar } from '@/components/TopBar';
 import { Verdict } from '@/components/Verdict';
 import { DEFAULT_LOCATION } from '@/config/data-sources';
+import { getDeviceLocation } from '@/lib/location';
 import { liveNight, liveNightWithWeather } from '@/lib/night';
 import { MOCK_NIGHTS } from '@/lib/mock-data';
+import { useStore } from '@/lib/store';
 import { ThemedText, ThemedView, useTheme } from '@/lib/theme';
-import { NightData } from '@/lib/types';
+import { Geo, NightData } from '@/lib/types';
 
 const PREVIEW_OPTIONS = ['GO', 'MAYBE', 'SKIP', 'LIVE'] as const;
 type PreviewKey = (typeof PREVIEW_OPTIONS)[number];
 
 export default function TonightScreen() {
   const { palette } = useTheme();
+  const router = useRouter();
   const [sel, setSel] = useState<PreviewKey>('GO');
+
+  // Active location: a selected saved location (unlocked) or the device's.
+  const saved = useStore((s) => s.saved);
+  const selectedId = useStore((s) => s.selectedId);
+  const isUnlocked = useStore((s) => s.isUnlocked);
+  const [device, setDevice] = useState<Geo | null>(null);
+  useEffect(() => {
+    getDeviceLocation().then(setDevice).catch(() => {});
+  }, []);
+
+  const activeLocation: Geo = useMemo(() => {
+    if (isUnlocked && selectedId) {
+      const found = saved.find((l) => l.id === selectedId);
+      if (found) return found;
+    }
+    return device ?? DEFAULT_LOCATION;
+  }, [isUnlocked, selectedId, saved, device]);
 
   // Instant astronomy-only night (never blank while the forecast loads).
   const liveBase = useMemo<NightData | null>(() => {
     try {
-      return liveNight(DEFAULT_LOCATION);
+      return liveNight(activeLocation);
     } catch {
       return null;
     }
-  }, []);
+  }, [activeLocation]);
 
   const [liveFull, setLiveFull] = useState<NightData | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  // On-demand weather fetch (cached). Runs once on open, plus pull-to-refresh.
+  // On-demand weather fetch (cached). Runs on open + on location change + pull.
   const refreshLive = useCallback(async () => {
     setRefreshing(true);
     try {
-      setLiveFull(await liveNightWithWeather(DEFAULT_LOCATION));
+      setLiveFull(await liveNightWithWeather(activeLocation));
     } catch {
       // Leave the astronomy-only night in place on failure.
     } finally {
       setRefreshing(false);
     }
-  }, []);
+  }, [activeLocation]);
 
   useEffect(() => {
+    setLiveFull(null);
     refreshLive();
   }, [refreshLive]);
 
@@ -76,7 +98,11 @@ export default function TonightScreen() {
           }
         >
           <View style={{ marginTop: 18, marginBottom: 30 }}>
-            <TopBar dateLabel={night.dateLabel} location={night.locationLabel} />
+            <TopBar
+              dateLabel={night.dateLabel}
+              location={night.locationLabel}
+              onPressLocation={() => router.push('/locations')}
+            />
           </View>
 
           <Verdict night={night} />

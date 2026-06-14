@@ -28,6 +28,12 @@
     "plugins": [
       "expo-router",
       [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Go Dark uses your location to compute tonight's sky where you are."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#06070e",

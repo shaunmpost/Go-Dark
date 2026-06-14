@@ -34,6 +34,7 @@ src/
   app/                 expo-router routes
     _layout.tsx        providers (gesture root, safe area, theme) + Stack
     index.tsx          the "Tonight" screen
+    locations.tsx      manage device + saved locations (gated)
   components/
     TopBar / FieldModeToggle / Verdict / NightRibbon /
     Scorecard / NudgeCard / Icon / DevStateSwitcher
@@ -44,6 +45,9 @@ src/
     astro.ts           astronomy-engine: buildRows + assembleNight
     weather.ts         free weather (Open-Meteo / 7Timer! / NWS) + cache
     night.ts           orchestrator: astronomy + weather -> NightData
+    best-night.ts      multi-day best-night finder (next ~14 nights)
+    location.ts        device location via expo-location
+    store.ts           zustand (saved locations, unlock) persisted
     mock-data.ts       hardcoded GO / MAYBE / SKIP nights
   config/
     verdict-weights.ts the single tunable config for the verdict
@@ -76,8 +80,10 @@ Tokens live in one place: `src/lib/theme.tsx`.
       (primary cloud cover) + 7Timer! (seeing/transparency) + NWS (US cross-check
       for source agreement -> confidence). Fetched on open / pull-to-refresh,
       cached per location+day, never polled. Degrades gracefully offline.
-- [ ] **Step 6** — device + saved locations, multi-day best-night finder.
-- [ ] **Step 7** — one-time unlock gate (stubbed purchase).
+- [x] **Step 6** — device location (expo-location), saved locations (zustand +
+      AsyncStorage, persisted) via a Locations screen, and the multi-day
+      best-night finder that powers the nudge from the next ~14 nights.
+- [ ] **Step 7** — finish the one-time unlock gate (wire the stubbed purchase).
 
 > A temporary **Dev · preview state** switcher at the bottom of the screen flips
 > GO / MAYBE / SKIP (mock-exact reference nights) plus **LIVE** (real on-device

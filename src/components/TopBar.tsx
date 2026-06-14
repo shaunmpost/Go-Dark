@@ -1,22 +1,31 @@
 /**
- * Top bar — "Tonight at / <location>" plus the field-mode toggle.
+ * Top bar — "Tonight at / <location>" (tap to manage locations) + the
+ * field-mode toggle.
  */
 import React from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { FieldModeToggle } from './FieldModeToggle';
 import { Icon } from './Icon';
 import { space, ThemedText } from '@/lib/theme';
 
-export function TopBar({ dateLabel, location }: { dateLabel: string; location: string }) {
+export function TopBar({
+  dateLabel,
+  location,
+  onPressLocation,
+}: {
+  dateLabel: string;
+  location: string;
+  onPressLocation?: () => void;
+}) {
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}
-    >
-      <View style={{ flex: 1, paddingRight: space.md }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Pressable
+        onPress={onPressLocation}
+        disabled={!onPressLocation}
+        style={{ flex: 1, paddingRight: space.md }}
+        accessibilityRole="button"
+        accessibilityLabel="Change location"
+      >
         <ThemedText variant="locLabel" tone="faint">
           {dateLabel} at
         </ThemedText>
@@ -26,7 +35,7 @@ export function TopBar({ dateLabel, location }: { dateLabel: string; location: s
             {location}
           </ThemedText>
         </View>
-      </View>
+      </Pressable>
       <FieldModeToggle />
     </View>
   );

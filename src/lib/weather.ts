@@ -38,7 +38,7 @@ async function fetchOpenMeteo(geo: Geo): Promise<CloudHour[]> {
   const url =
     `${DATA_SOURCES.openMeteoBaseUrl}?latitude=${geo.latitude}&longitude=${geo.longitude}` +
     `&hourly=cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high` +
-    `&forecast_days=2&timeformat=unixtime&timezone=UTC`;
+    `&forecast_days=16&timeformat=unixtime&timezone=UTC`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`open-meteo ${res.status}`);
   const j: any = await res.json();
