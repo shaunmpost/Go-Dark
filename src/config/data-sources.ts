@@ -16,6 +16,8 @@ export const DATA_SOURCES = {
 
   /** NWS — US cross-check for total sky cover. Free, no key. */
   nwsBaseUrl: 'https://api.weather.gov',
+  /** NWS requires a descriptive User-Agent on every request. */
+  nwsUserAgent: 'GoDark/0.1 (https://godark.app; contact@godark.app)',
 
   /** 7Timer! — seeing & transparency. Free; self-mirror later for reliability. */
   sevenTimerBaseUrl: 'https://www.7timer.info/bin/astro.php',

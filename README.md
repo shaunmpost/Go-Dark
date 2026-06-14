@@ -41,8 +41,9 @@ src/
     theme.tsx          design tokens, the two themes, themed primitives
     types.ts           domain types (NightData, Factor, RibbonSample…)
     verdict.ts         transparent weighted scoring (pure)
-    astro.ts           astronomy-engine wiring  (stub → Step 4)
-    weather.ts         free weather fetchers    (stub → Step 5)
+    astro.ts           astronomy-engine: buildRows + assembleNight
+    weather.ts         free weather (Open-Meteo / 7Timer! / NWS) + cache
+    night.ts           orchestrator: astronomy + weather -> NightData
     mock-data.ts       hardcoded GO / MAYBE / SKIP nights
   config/
     verdict-weights.ts the single tunable config for the verdict
@@ -71,7 +72,10 @@ Tokens live in one place: `src/lib/theme.tsx`.
       moon altitude + illumination, and the galactic core (Sgr A*, defined as a
       custom star) arc/rise/peak for a hardcoded location. Drives the ribbon,
       bands, window, and the astro factors. See the **LIVE** dev option.
-- [ ] **Step 5** — weather (Open-Meteo first) + end-to-end verdict scoring.
+- [x] **Step 5** — weather wired and the verdict computed end-to-end. Open-Meteo
+      (primary cloud cover) + 7Timer! (seeing/transparency) + NWS (US cross-check
+      for source agreement -> confidence). Fetched on open / pull-to-refresh,
+      cached per location+day, never polled. Degrades gracefully offline.
 - [ ] **Step 6** — device + saved locations, multi-day best-night finder.
 - [ ] **Step 7** — one-time unlock gate (stubbed purchase).
 

@@ -1,5 +1,17 @@
 /** Shared domain types for Go Dark. */
 
+/** A location to plan for. */
+export type Geo = {
+  latitude: number;
+  longitude: number;
+  elevationM?: number;
+  label: string;
+  /** Location's UTC offset in hours (e.g. -6 for US Mountain in summer). The
+   *  ribbon's 6 PM -> 6 AM is anchored to the location's local time, not the
+   *  device's, so it works regardless of where the app runs. */
+  utcOffsetHours: number;
+};
+
 export type VerdictState = 'GO' | 'MAYBE' | 'SKIP';
 export type Confidence = 'High' | 'Medium' | 'Low';
 

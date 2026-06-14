@@ -1,10 +1,11 @@
 /**
  * Tonight — the v1 screen. Open the app, get the verdict. Everything here is
- * driven by `NightData`; Step 1 feeds it from `mock-data`, later steps swap in
- * the computed astronomy + weather pipeline with no UI changes.
+ * driven by `NightData`; GO / MAYBE / SKIP are mock-exact reference nights and
+ * LIVE is the real, end-to-end computed night (astronomy + weather) for the
+ * hardcoded location.
  */
-import React, { useMemo, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { RefreshControl, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DevStateSwitcher } from '@/components/DevStateSwitcher';
 import { NightRibbon } from '@/components/NightRibbon';
@@ -13,27 +14,48 @@ import { Scorecard } from '@/components/Scorecard';
 import { TopBar } from '@/components/TopBar';
 import { Verdict } from '@/components/Verdict';
 import { DEFAULT_LOCATION } from '@/config/data-sources';
-import { computeNight } from '@/lib/astro';
+import { liveNight, liveNightWithWeather } from '@/lib/night';
 import { MOCK_NIGHTS } from '@/lib/mock-data';
-import { ThemedText, ThemedView } from '@/lib/theme';
+import { ThemedText, ThemedView, useTheme } from '@/lib/theme';
 import { NightData } from '@/lib/types';
 
 const PREVIEW_OPTIONS = ['GO', 'MAYBE', 'SKIP', 'LIVE'] as const;
 type PreviewKey = (typeof PREVIEW_OPTIONS)[number];
 
 export default function TonightScreen() {
+  const { palette } = useTheme();
   const [sel, setSel] = useState<PreviewKey>('GO');
 
-  // Real on-device astronomy for the hardcoded location (Step 4).
-  const live = useMemo<NightData | null>(() => {
+  // Instant astronomy-only night (never blank while the forecast loads).
+  const liveBase = useMemo<NightData | null>(() => {
     try {
-      return computeNight(DEFAULT_LOCATION, new Date());
+      return liveNight(DEFAULT_LOCATION);
     } catch {
       return null;
     }
   }, []);
 
-  const night: NightData = sel === 'LIVE' ? live ?? MOCK_NIGHTS.GO : MOCK_NIGHTS[sel];
+  const [liveFull, setLiveFull] = useState<NightData | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // On-demand weather fetch (cached). Runs once on open, plus pull-to-refresh.
+  const refreshLive = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      setLiveFull(await liveNightWithWeather(DEFAULT_LOCATION));
+    } catch {
+      // Leave the astronomy-only night in place on failure.
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshLive();
+  }, [refreshLive]);
+
+  const night: NightData =
+    sel === 'LIVE' ? liveFull ?? liveBase ?? MOCK_NIGHTS.GO : MOCK_NIGHTS[sel];
 
   return (
     <ThemedView tone="bg" style={{ flex: 1 }}>
@@ -41,6 +63,17 @@ export default function TonightScreen() {
         <ScrollView
           contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 8, paddingBottom: 56 }}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            sel === 'LIVE' ? (
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={refreshLive}
+                tintColor={palette.muted}
+                colors={[palette.accent]}
+                progressBackgroundColor={palette.bg}
+              />
+            ) : undefined
+          }
         >
           <View style={{ marginTop: 18, marginBottom: 30 }}>
             <TopBar dateLabel={night.dateLabel} location={night.locationLabel} />
@@ -49,7 +82,7 @@ export default function TonightScreen() {
           <Verdict night={night} />
 
           <View style={{ marginTop: 36 }}>
-            <NightRibbon night={night} />
+            <NightRibbon key={sel} night={night} />
           </View>
 
           <View style={{ marginTop: 28 }}>

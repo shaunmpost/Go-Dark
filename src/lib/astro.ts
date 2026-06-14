@@ -1,36 +1,34 @@
 /**
  * On-device celestial math via `astronomy-engine` — zero cost, no API.
  *
- * Computes everything the ribbon and window need from a lat/long + date:
  *   • Sun altitude through the night -> astronomical dark window (sun ≤ -18°).
  *   • Moon altitude + illumination -> moon-up bands and the moon factor.
  *   • The Milky Way galactic core (Sagittarius A*), defined as a custom star,
  *     -> alt/az across the night, rise, peak altitude and compass direction.
  *
- * Cloud / transparency / seeing come from the (free) weather layer in Step 5;
- * here they are left as honest "awaiting forecast" placeholders so the verdict
- * is preliminary and the confidence reflects that.
+ * `buildRows` does the pure astronomy (sync). `assembleNight` turns it into a
+ * `NightData`, folding in an optional weather forecast for the cloud /
+ * transparency / seeing factors and the final verdict. With no forecast the
+ * verdict is preliminary and confidence is Low.
  */
 import * as Astronomy from 'astronomy-engine';
 import { GALACTIC_CORE } from '@/config/data-sources';
 import { formatDuration, minutesToClock, RIBBON } from './mock-data';
-import { Factor, NightData, RibbonSample, TimeBand } from './types';
+import { Factor, Geo, NightData, RibbonSample, TimeBand, VerdictState } from './types';
 import { computeConfidence, computeVerdict } from './verdict';
-
-export type Geo = {
-  latitude: number;
-  longitude: number;
-  elevationM?: number;
-  label: string;
-  /** Location's UTC offset in hours (e.g. -6 for US Mountain in summer). The
-   *  ribbon's 6 PM -> 6 AM is anchored to the location's local time, not the
-   *  device's, so it works regardless of where the app runs. */
-  utcOffsetHours: number;
-};
+import {
+  astroAt,
+  cloudFractionAt,
+  indexToScore,
+  seeingWord,
+  transparencyWord,
+  WeatherForecast,
+} from './weather';
 
 const STEP = RIBBON.step;
 const TOTAL = RIBBON.totalMinutes;
 const MIN_CORE_ALT = 10; // degrees the core must clear to count as "up enough"
+const CLOUD_LIMIT = 0.5; // fraction above which the sky is "clouded" for the window
 
 // Register the galactic core once as a user-defined star (J2000 RA/Dec).
 Astronomy.DefineStar(Astronomy.Body.Star1, GALACTIC_CORE.raHours, GALACTIC_CORE.decDeg, 26000);
@@ -49,6 +47,8 @@ function dirWord(dir: string): string {
 }
 
 type Row = { min: number; sun: number; moonAlt: number; coreAlt: number; coreAz: number };
+
+export type NightModel = { rows: Row[]; ribbonStart: Date };
 
 function altAz(body: Astronomy.Body, observer: Astronomy.Observer, date: Date) {
   const time = Astronomy.MakeTime(date);
@@ -90,7 +90,7 @@ function longestRun(rows: Row[], ok: (r: Row) => boolean): TimeBand | null {
   return best;
 }
 
-/** All contiguous runs where `ok(row)` holds (e.g. moon-up bands). */
+/** All contiguous runs where `ok(row)` holds. */
 function allRuns(rows: Row[], ok: (r: Row) => boolean): TimeBand[] {
   const out: TimeBand[] = [];
   let start: number | null = null;
@@ -106,32 +106,29 @@ function allRuns(rows: Row[], ok: (r: Row) => boolean): TimeBand[] {
   return out;
 }
 
-function skyState(sun: number, moonUp: boolean, coreAlt: number): string {
+function skyState(sun: number, moonUp: boolean, coreAlt: number, cloud: number): string {
   if (sun > 0) return 'Daylight';
   if (sun > -6) return 'Civil twilight';
   if (sun > -12) return 'Nautical twilight';
   if (sun > -18) return 'Astro twilight';
-  // Astronomical dark (no weather yet).
+  if (cloud > 0.7) return 'Overcast';
+  if (cloud > 0.4) return 'Dark · clouds';
   if (moonUp) return 'Dark · moon up';
   if (coreAlt >= MIN_CORE_ALT) return 'Dark · core up';
   return 'Dark · clear';
 }
 
-export function computeNight(geo: Geo, now: Date): NightData {
+/** Pure astronomy: dense alt/az samples across the night for a location. */
+export function buildRows(geo: Geo, now: Date): NightModel {
   const observer = new Astronomy.Observer(geo.latitude, geo.longitude, geo.elevationM ?? 0);
   const offMs = geo.utcOffsetHours * 3600000;
 
-  // The location's local calendar date (shift the instant into local time, then
-  // read its UTC fields), so "tonight" is the location's tonight.
+  // The location's local calendar date, so "tonight" is the location's tonight.
   const local = new Date(now.getTime() + offMs);
-  const lY = local.getUTCFullYear();
-  const lM = local.getUTCMonth();
-  const lD = local.getUTCDate();
+  const ribbonStart = new Date(
+    Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate(), RIBBON.startHour, 0, 0, 0) - offMs,
+  );
 
-  // The actual UTC instant of 6 PM local at the location.
-  const ribbonStart = new Date(Date.UTC(lY, lM, lD, RIBBON.startHour, 0, 0, 0) - offMs);
-
-  // Dense sampling across the night.
   const rows: Row[] = [];
   for (let min = 0; min <= TOTAL; min += STEP) {
     const d = new Date(ribbonStart.getTime() + min * 60000);
@@ -140,43 +137,107 @@ export function computeNight(geo: Geo, now: Date): NightData {
     const core = altAz(CORE, observer, d);
     rows.push({ min, sun, moonAlt: moon.alt, coreAlt: core.alt, coreAz: core.az });
   }
+  return { rows, ribbonStart };
+}
 
-  const samples: RibbonSample[] = rows.map((r) => ({
-    minutes: r.min,
-    coreAlt: Math.round(r.coreAlt),
-    coreDir: azToCompass(r.coreAz),
-    moonUp: r.moonAlt > 0,
-    cloud: 0,
-    sky: skyState(r.sun, r.moonAlt > 0, r.coreAlt),
-  }));
+function makeHeadline(
+  state: VerdictState,
+  darkMinutes: number,
+  darkBand: TimeBand,
+  hasWindow: boolean,
+  peakAlt: number,
+  peakDir: string,
+  avgCloud: number,
+  illum: number,
+  hasWeather: boolean,
+  moonUpInDark: number,
+): string {
+  if (darkMinutes <= 0) return 'No astronomical darkness tonight at this latitude.';
+  const dir = dirWord(peakDir);
+  const range = `${minutesToClock(darkBand.start)} to ${minutesToClock(darkBand.end)}`;
+  if (state === 'SKIP') {
+    if (hasWeather && avgCloud > 0.6) return 'Overcast through the dark window — no usable sky tonight.';
+    return `Dark from ${range}, but the core stays low${illum > 0.5 ? ' and the moon is bright' : ''}.`;
+  }
+  if (state === 'MAYBE') {
+    if (hasWeather && avgCloud > 0.3)
+      return `Mostly clear, but cloud builds during the window — the core peaks ${peakAlt}° in the ${dir}.`;
+    if (moonUpInDark > 0.4 && illum > 0.4)
+      return `Clear, but the moon brightens the sky for part of the window. The core peaks ${peakAlt}° in the ${dir}.`;
+    return `A workable window — the core peaks ${peakAlt}° in the ${dir}.`;
+  }
+  const clarity = hasWeather ? (avgCloud < 0.1 ? 'Clear and dark' : 'Mostly clear') : 'Dark';
+  return `${clarity} from ${range}; the core peaks ${peakAlt}° in the ${dir}.`;
+}
 
-  // Astronomical dark window (largest run sun ≤ -18).
-  const darkRun = longestRun(rows, (r) => r.sun <= -18);
-  const darkBand: TimeBand = darkRun ?? { start: 0, end: 0 };
+/** Turn the astronomy model (+ optional forecast) into the final NightData. */
+export function assembleNight(
+  geo: Geo,
+  model: NightModel,
+  forecast: WeatherForecast | null,
+  now: Date,
+): NightData {
+  const { rows, ribbonStart } = model;
+  const msOf = (min: number) => ribbonStart.getTime() + min * 60000;
+  const cloudOf = (min: number) => (forecast ? cloudFractionAt(forecast, msOf(min)) ?? 0 : 0);
+
+  const samples: RibbonSample[] = rows.map((r) => {
+    const cloud = cloudOf(r.min);
+    return {
+      minutes: r.min,
+      coreAlt: Math.round(r.coreAlt),
+      coreDir: azToCompass(r.coreAz),
+      moonUp: r.moonAlt > 0,
+      cloud,
+      sky: skyState(r.sun, r.moonAlt > 0, r.coreAlt, cloud),
+    };
+  });
+
+  const darkBand: TimeBand = longestRun(rows, (r) => r.sun <= -18) ?? { start: 0, end: 0 };
   const darkMinutes = darkBand.end - darkBand.start;
-
   const moonBands = allRuns(rows, (r) => r.moonAlt > 0);
   const coreRiseMinutes = crossing(rows, (r) => r.coreAlt, 0, true);
 
-  // Best window: dark AND core ≥ MIN_CORE_ALT AND moon down.
+  // Cloud bands (from the forecast-driven samples) and the best window.
+  const cloudBands: TimeBand[] = forecast
+    ? allRuns(rows, (r) => cloudOf(r.min) >= CLOUD_LIMIT)
+    : [];
   const window = longestRun(
     rows,
-    (r) => r.sun <= -18 && r.coreAlt >= MIN_CORE_ALT && r.moonAlt <= 0,
+    (r) => r.sun <= -18 && r.coreAlt >= MIN_CORE_ALT && r.moonAlt <= 0 && (!forecast || cloudOf(r.min) < CLOUD_LIMIT),
   );
 
-  // Core peak (max altitude) + its direction.
+  // Core peak.
   let peak = rows[0];
   for (const r of rows) if (r.coreAlt > peak.coreAlt) peak = r;
   const peakDir = azToCompass(peak.coreAz);
-  const peakAltRounded = Math.round(peak.coreAlt);
+  const peakAlt = Math.round(peak.coreAlt);
 
-  // Moon illumination + how much of the dark window it intrudes on.
+  // Moon.
   const illum = Astronomy.Illumination(Astronomy.Body.Moon, Astronomy.MakeTime(ribbonStart)).phase_fraction;
   const darkRows = rows.filter((r) => r.min >= darkBand.start && r.min <= darkBand.end);
-  const moonUpInDark = darkRows.length
-    ? darkRows.filter((r) => r.moonAlt > 0).length / darkRows.length
-    : 0;
+  const moonUpInDark = darkRows.length ? darkRows.filter((r) => r.moonAlt > 0).length / darkRows.length : 0;
   const moonSet = crossing(rows, (r) => r.moonAlt, 0, false);
+
+  // Cloud factor over the window (or dark band).
+  const span = window ?? (darkMinutes > 0 ? darkBand : null);
+  let cloudScore = 0.75;
+  let cloudValue = 'Awaiting forecast';
+  let avgCloud = 0;
+  if (forecast) {
+    const inSpan = span
+      ? samples.filter((s) => s.minutes >= span.start && s.minutes <= span.end)
+      : samples;
+    avgCloud = inSpan.length ? inSpan.reduce((a, s) => a + s.cloud, 0) / inSpan.length : 0;
+    cloudScore = 1 - avgCloud;
+    cloudValue = `${Math.round(avgCloud * 100)}% ${span ? 'during the window' : 'overnight'}`;
+  }
+
+  // Transparency + seeing from 7Timer! at the window centre.
+  const centerMs = msOf(span ? (span.start + span.end) / 2 : 360);
+  const a = forecast ? astroAt(forecast, centerMs) : null;
+  const transScore = a ? indexToScore(a.transparency) : 0.7;
+  const seeingScore = a ? indexToScore(a.seeing) : 0.6;
 
   const factors: Factor[] = [
     {
@@ -185,12 +246,7 @@ export function computeNight(geo: Geo, now: Date): NightData {
       value: darkMinutes > 0 ? `${formatDuration(darkMinutes)} astronomical dark` : 'No astronomical dark',
       score: Math.max(0, Math.min(1, darkMinutes / 360)),
     },
-    {
-      key: 'cloud',
-      label: 'Cloud cover',
-      value: 'Awaiting forecast',
-      score: 0.75,
-    },
+    { key: 'cloud', label: 'Cloud cover', value: cloudValue, score: cloudScore },
     {
       key: 'moon',
       label: 'Moon',
@@ -199,44 +255,59 @@ export function computeNight(geo: Geo, now: Date): NightData {
         (moonSet != null ? ` · sets ${minutesToClock(moonSet)}` : moonUpInDark > 0.5 ? ' · up most of night' : ' · down'),
       score: Math.max(0, Math.min(1, (1 - illum) * 0.5 + (1 - moonUpInDark) * 0.5)),
     },
-    { key: 'transparency', label: 'Transparency', value: 'Awaiting forecast', score: 0.7 },
-    { key: 'seeing', label: 'Seeing', value: 'Awaiting forecast', score: 0.6 },
+    {
+      key: 'transparency',
+      label: 'Transparency',
+      value: a ? transparencyWord(a.transparency) : 'Awaiting forecast',
+      score: transScore,
+    },
+    {
+      key: 'seeing',
+      label: 'Seeing',
+      value: a ? seeingWord(a.seeing) : 'Awaiting forecast',
+      score: seeingScore,
+    },
     {
       key: 'core',
       label: 'Core position',
       value:
         coreRiseMinutes != null
-          ? `Rises ${minutesToClock(coreRiseMinutes)} · peaks ${peakAltRounded}° ${peakDir}`
-          : `Peaks ${peakAltRounded}° ${peakDir}`,
-      score: Math.max(0, Math.min(1, peakAltRounded / 40)),
+          ? `Rises ${minutesToClock(coreRiseMinutes)} · peaks ${peakAlt}° ${peakDir}`
+          : `Peaks ${peakAlt}° ${peakDir}`,
+      score: Math.max(0, Math.min(1, peakAlt / 40)),
     },
   ];
 
-  const { state } = computeVerdict(factors, { darkMinutes, cloudScore: factors[1].score });
-  // Weather not yet wired, so be honest: confidence stays low until Step 5.
-  const confidence = computeConfidence(72, 0.4);
+  const { state } = computeVerdict(factors, { darkMinutes, cloudScore });
 
-  const headline =
-    darkMinutes <= 0
-      ? 'No astronomical darkness tonight at this latitude.'
-      : window
-        ? `Astronomical dark from ${minutesToClock(darkBand.start)} to ${minutesToClock(darkBand.end)}; the core peaks ${peakAltRounded}° in the ${dirWord(peakDir)}.`
-        : `Dark from ${minutesToClock(darkBand.start)} to ${minutesToClock(darkBand.end)}, but the core stays low and the moon is a factor.`;
+  let confidence: NightData['confidence'] = 'Low';
+  if (forecast) {
+    const startMin = window ? window.start : darkBand.start;
+    const leadHours = Math.max(0, (msOf(startMin) - now.getTime()) / 3600000);
+    confidence = computeConfidence(leadHours, forecast.agreement);
+  }
 
   return {
     locationLabel: geo.label,
     dateLabel: 'Tonight',
     state,
     confidence,
-    headline,
+    headline: makeHeadline(state, darkMinutes, darkBand, !!window, peakAlt, peakDir, avgCloud, illum, !!forecast, moonUpInDark),
     window,
     factors,
     darkBand,
     moonBands,
-    cloudBands: [],
+    cloudBands,
     coreRiseMinutes,
     samples,
     bestNight: null,
-    forecastNote: 'Live on-device astronomy · weather (clouds, transparency, seeing) lands next',
+    forecastNote: forecast
+      ? `Cloud from ${forecast.sources.join(' · ')} · fetched on open, cached`
+      : 'Live on-device astronomy · weather unavailable (offline)',
   };
+}
+
+/** Convenience: astronomy-only night (no weather). */
+export function computeNight(geo: Geo, now: Date): NightData {
+  return assembleNight(geo, buildRows(geo, now), null, now);
 }
