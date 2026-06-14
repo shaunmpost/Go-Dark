@@ -21,7 +21,7 @@ export function TopBar({ dateLabel, location }: { dateLabel: string; location: s
           {dateLabel} at
         </ThemedText>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }}>
-          <Icon name="pin" size={13} tone="muted" strokeWidth={2} />
+          <Icon name="pin" size={13} tone="text" strokeWidth={2} opacity={0.7} />
           <ThemedText variant="locName" tone="text">
             {location}
           </ThemedText>

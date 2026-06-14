@@ -121,20 +121,20 @@ export function NightRibbon({ night }: { night: NightData }) {
     sample.coreAlt > 0 ? `Core ${Math.round(sample.coreAlt)}° ${sample.coreDir}` : 'Core below horizon';
 
   return (
-    <View style={{ gap: 9 }}>
+    <View>
       {/* Section header with live readout */}
       <View
         style={{
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'baseline',
-          marginBottom: 7,
+          marginBottom: 16,
         }}
       >
         <ThemedText variant="sectionH" tone="muted">
           The night
         </ThemedText>
-        <ThemedText variant="readout" tone="muted" style={{ flexShrink: 1, textAlign: 'right' }}>
+        <ThemedText variant="readout" tone="text" style={{ flexShrink: 1, textAlign: 'right' }}>
           <ThemedText variant="readout" tone="accent">
             {minutesToClock(sample.minutes)}
           </ThemedText>
@@ -215,7 +215,7 @@ export function NightRibbon({ night }: { night: NightData }) {
       </GestureDetector>
 
       {/* Hour ticks */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 2 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 2, marginTop: 9 }}>
         {HOUR_TICKS.map((label) => (
           <ThemedText key={label} variant="tick" tone="faint">
             {label}

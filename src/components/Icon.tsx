@@ -36,12 +36,14 @@ export function Icon({
   tone = 'text',
   strokeWidth = 1.8,
   fill = false,
+  opacity = 1,
 }: {
   name: IconName;
   size?: number;
   tone?: ColorKey;
   strokeWidth?: number;
   fill?: boolean;
+  opacity?: number;
 }) {
   const { t } = useTheme();
   const animatedProps = useAnimatedProps(() => {
@@ -51,7 +53,7 @@ export function Icon({
   });
 
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Svg width={size} height={size} viewBox="0 0 24 24" opacity={opacity}>
       <AnimatedPath
         d={PATHS[name]}
         strokeWidth={strokeWidth}

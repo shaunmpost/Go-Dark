@@ -108,7 +108,7 @@ export function Verdict({ night }: { night: NightData }) {
   const tone = STATE_TONE[night.state];
 
   return (
-    <View style={{ alignItems: 'center', paddingTop: 14, paddingBottom: 6 }}>
+    <View style={{ alignItems: 'center', paddingTop: 14, paddingBottom: 30 }}>
       <HeroGlow tone={tone} />
 
       <ThemedText variant="eyebrow" tone="muted" style={{ marginBottom: 22 }}>

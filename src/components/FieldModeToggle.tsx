@@ -22,7 +22,7 @@ export function FieldModeToggle() {
     <Animated.View style={animatedStyle}>
       <Pressable
         onPress={toggleFieldMode}
-        onPressIn={() => (scale.value = withTiming(0.9, { duration: 120 }))}
+        onPressIn={() => (scale.value = withTiming(0.92, { duration: 120 }))}
         onPressOut={() => (scale.value = withTiming(1, { duration: 160 }))}
         accessibilityRole="switch"
         accessibilityState={{ checked: fieldMode }}
@@ -33,14 +33,14 @@ export function FieldModeToggle() {
           tone="panel"
           border
           style={{
-            width: 44,
-            height: 44,
+            width: 42,
+            height: 42,
             borderRadius: radii.pill,
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Icon name="moon" size={20} tone={fieldMode ? 'accent' : 'muted'} />
+          <Icon name="moon" size={19} tone="text" strokeWidth={2} />
         </ThemedView>
       </Pressable>
     </Animated.View>

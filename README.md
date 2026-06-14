@@ -67,14 +67,18 @@ Tokens live in one place: `src/lib/theme.tsx`.
       best-night NudgeCard, footer) driven by mock data.
 - [x] Ribbon scrubbing (gesture + live readout) and Why-tonight expand/collapse.
 - [x] GO / MAYBE / SKIP states + confidence (preview via the dev switcher).
-- [ ] **Step 4** — wire `astronomy-engine` (twilight, moon, galactic core).
+- [x] **Step 4** — `astronomy-engine` wired: real astronomical-dark window,
+      moon altitude + illumination, and the galactic core (Sgr A*, defined as a
+      custom star) arc/rise/peak for a hardcoded location. Drives the ribbon,
+      bands, window, and the astro factors. See the **LIVE** dev option.
 - [ ] **Step 5** — weather (Open-Meteo first) + end-to-end verdict scoring.
 - [ ] **Step 6** — device + saved locations, multi-day best-night finder.
 - [ ] **Step 7** — one-time unlock gate (stubbed purchase).
 
 > A temporary **Dev · preview state** switcher at the bottom of the screen flips
-> GO / MAYBE / SKIP so all three can be reviewed before the data pipeline lands.
-> It's removed once the verdict is computed end-to-end.
+> GO / MAYBE / SKIP (mock-exact reference nights) plus **LIVE** (real on-device
+> astronomy for the hardcoded location). It's removed once the verdict is
+> computed end-to-end.
 
 ## Constraints
 

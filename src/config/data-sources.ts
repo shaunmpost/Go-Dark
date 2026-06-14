@@ -27,6 +27,18 @@ export const GALACTIC_CORE = {
   decDeg: -(29 + 0 / 60 + 28 / 3600), // -29° 00' 28"
 } as const;
 
+/**
+ * Hardcoded location for Step 4 (real on-device astronomy). Device + saved
+ * locations arrive in Step 6. A dark, high site so the demo has real dark sky.
+ */
+export const DEFAULT_LOCATION = {
+  label: 'Pine Ridge Overlook',
+  latitude: 30.67,
+  longitude: -104.02,
+  elevationM: 2070,
+  utcOffsetHours: -5, // US Central (CDT) — simple fixed offset for v1
+} as const;
+
 /** Cache policy: fetch on demand only, never poll in the background. */
 export const CACHE = {
   /** Treat a cached forecast as fresh for this long (ms). */
