@@ -1,5 +1,5 @@
 /**
- * Verdict design system.
+ * Go Dark design system.
  *
  * Two themes, swapped via a single animated `t` value (0 = Night, 1 = Field).
  * Tokens are transcribed directly from the mock; the Field (night-vision red)

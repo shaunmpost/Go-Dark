@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Verdict",
-    "slug": "verdict",
+    "name": "Go Dark",
+    "slug": "go-dark",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "verdict",
+    "scheme": "godark",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#06070e",
     "ios": {

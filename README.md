@@ -1,4 +1,4 @@
-# Verdict
+# Go Dark
 
 A night-sky planning app for astrophotographers. One promise: open it and
 instantly know **whether tonight is worth shooting, and if so when and where to

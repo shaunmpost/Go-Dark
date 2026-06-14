@@ -1,4 +1,4 @@
-/** Shared domain types for Verdict. */
+/** Shared domain types for Go Dark. */
 
 export type VerdictState = 'GO' | 'MAYBE' | 'SKIP';
 export type Confidence = 'High' | 'Medium' | 'Low';
