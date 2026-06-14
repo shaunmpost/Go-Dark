@@ -7,29 +7,38 @@
 import React from 'react';
 import { View } from 'react-native';
 import { Icon } from './Icon';
-import { radii, space, ThemedText, ThemedView } from '@/lib/theme';
+import { radii, ThemedText, ThemedView } from '@/lib/theme';
 import { NightData } from '@/lib/types';
 
 export function NudgeCard({ night }: { night: NightData }) {
   if (!night.bestNight) return null;
-  const { dayLabel, summary } = night.bestNight;
-  const isTonight = dayLabel.toLowerCase() === 'tonight';
+  const { title, body } = night.bestNight;
 
   return (
     <ThemedView
-      tone="accentDim"
-      border="accent"
-      style={{ borderRadius: radii.lg, padding: space.lg, flexDirection: 'row', gap: space.md }}
+      tone="panel"
+      border
+      style={{
+        borderRadius: radii.lg,
+        paddingVertical: 18,
+        paddingHorizontal: 20,
+        flexDirection: 'row',
+        gap: 14,
+        alignItems: 'flex-start',
+      }}
     >
-      <View style={{ paddingTop: 2 }}>
-        <Icon name="moon" size={18} tone="accent" fill />
-      </View>
+      <ThemedView
+        tone="accentDim"
+        style={{ width: 38, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center' }}
+      >
+        <Icon name="bell" size={18} tone="accent" />
+      </ThemedView>
       <View style={{ flex: 1, gap: 4 }}>
-        <ThemedText variant="label" tone="accent">
-          {isTonight ? 'Best night this week' : 'Your best upcoming night'}
+        <ThemedText variant="nudgeTitle" tone="text">
+          {title}
         </ThemedText>
-        <ThemedText variant="bodyStrong" tone="text">
-          {dayLabel} {summary}
+        <ThemedText variant="nudgeBody" tone="muted">
+          {body}
         </ThemedText>
       </View>
     </ThemedView>

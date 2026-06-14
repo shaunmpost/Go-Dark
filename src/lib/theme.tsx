@@ -20,10 +20,12 @@ import Animated, {
 export type ColorKey =
   | 'bg'
   | 'panel'
+  | 'panelStrong'
   | 'text'
   | 'muted'
   | 'faint'
   | 'hairline'
+  | 'hairlineStrong'
   | 'accent'
   | 'accentDim'
   | 'amber'
@@ -31,8 +33,7 @@ export type ColorKey =
   | 'ribbonEdge'
   | 'ribbonCenter'
   | 'moonBand'
-  | 'cloudBand'
-  | 'glow';
+  | 'cloudBand';
 
 export type Palette = Record<ColorKey, string>;
 
@@ -40,38 +41,40 @@ export type Palette = Record<ColorKey, string>;
 export const nightPalette: Palette = {
   bg: '#06070e',
   panel: 'rgba(255,255,255,0.035)',
+  panelStrong: 'rgba(255,255,255,0.055)',
   text: '#f2f5fc',
   muted: 'rgba(214,223,245,0.52)',
   faint: 'rgba(214,223,245,0.32)',
   hairline: 'rgba(255,255,255,0.08)',
+  hairlineStrong: 'rgba(255,255,255,0.14)',
   accent: '#74ecc0',
   accentDim: 'rgba(116,236,192,0.18)',
   amber: '#e8b15c',
   skip: '#e0735f',
   ribbonEdge: '#1a2a55',
   ribbonCenter: '#070912',
-  moonBand: 'rgba(184,202,255,0.14)',
-  cloudBand: 'rgba(214,223,245,0.20)',
-  glow: 'rgba(116,236,192,0.55)',
+  moonBand: 'rgba(120,140,200,0.13)',
+  cloudBand: 'rgba(150,165,200,0.30)',
 };
 
 /** Field mode — night-vision red. Everything collapses to a single hue. */
 export const fieldPalette: Palette = {
   bg: '#0b0100',
-  panel: 'rgba(255,94,68,0.06)',
+  panel: 'rgba(255,60,40,0.05)',
+  panelStrong: 'rgba(255,60,40,0.08)',
   text: '#ff5e44',
-  muted: 'rgba(255,94,68,0.55)',
-  faint: 'rgba(255,94,68,0.34)',
-  hairline: 'rgba(255,94,68,0.16)',
+  muted: 'rgba(255,94,68,0.5)',
+  faint: 'rgba(255,94,68,0.3)',
+  hairline: 'rgba(255,80,55,0.14)',
+  hairlineStrong: 'rgba(255,80,55,0.22)',
   accent: '#ff7a5e',
-  accentDim: 'rgba(255,122,94,0.18)',
-  amber: '#ff6a4e',
+  accentDim: 'rgba(255,122,94,0.16)',
+  amber: '#ff9b6e',
   skip: '#ff5e44',
-  ribbonEdge: '#3a0c04',
-  ribbonCenter: '#0b0100',
-  moonBand: 'rgba(255,94,68,0.18)',
-  cloudBand: 'rgba(255,94,68,0.16)',
-  glow: 'rgba(255,122,94,0.5)',
+  ribbonEdge: '#3a0a04',
+  ribbonCenter: '#160200',
+  moonBand: 'rgba(255,110,80,0.12)',
+  cloudBand: 'rgba(255,120,90,0.22)',
 };
 
 type ThemeContextValue = {
@@ -140,14 +143,25 @@ export function useColorValue(key: ColorKey): string {
 // --- Typography -------------------------------------------------------------
 
 export const type = {
-  hero: { fontSize: 74, fontWeight: '700', letterSpacing: -2, lineHeight: 78 } as TextStyle,
-  h2: { fontSize: 22, fontWeight: '600', letterSpacing: -0.4 } as TextStyle,
+  hero: { fontSize: 74, fontWeight: '700', letterSpacing: -2, lineHeight: 67 } as TextStyle,
+  eyebrow: { fontSize: 12, fontWeight: '600', letterSpacing: 2.4, textTransform: 'uppercase' } as TextStyle,
+  conf: { fontSize: 12.5, fontWeight: '600', letterSpacing: 0.3 } as TextStyle,
+  sentence: { fontSize: 17, fontWeight: '400', lineHeight: 25.5 } as TextStyle,
+  windowTime: { fontSize: 21, fontWeight: '600', letterSpacing: 0.3, fontVariant: ['tabular-nums'] } as TextStyle,
+  sectionH: { fontSize: 13, fontWeight: '600', letterSpacing: 1.4, textTransform: 'uppercase' } as TextStyle,
+  readout: { fontSize: 12.5, fontWeight: '500', letterSpacing: 0.2, fontVariant: ['tabular-nums'] } as TextStyle,
+  tick: { fontSize: 10.5, fontWeight: '500', letterSpacing: 0.4, fontVariant: ['tabular-nums'] } as TextStyle,
+  toggle: { fontSize: 15, fontWeight: '600', letterSpacing: -0.1 } as TextStyle,
+  fname: { fontSize: 14.5, fontWeight: '500', letterSpacing: -0.1 } as TextStyle,
+  fval: { fontSize: 12.5, fontWeight: '500', letterSpacing: 0.1 } as TextStyle,
+  locLabel: { fontSize: 11, fontWeight: '600', letterSpacing: 1.6, textTransform: 'uppercase' } as TextStyle,
+  locName: { fontSize: 16, fontWeight: '600', letterSpacing: -0.2 } as TextStyle,
+  nudgeTitle: { fontSize: 14.5, fontWeight: '600', letterSpacing: -0.1 } as TextStyle,
+  nudgeBody: { fontSize: 13, fontWeight: '400', lineHeight: 18.9 } as TextStyle,
+  foot: { fontSize: 11, fontWeight: '500', letterSpacing: 0.4 } as TextStyle,
+  // generic helpers
   body: { fontSize: 15, fontWeight: '400', lineHeight: 22, letterSpacing: -0.1 } as TextStyle,
-  bodyStrong: { fontSize: 16, fontWeight: '600', lineHeight: 23, letterSpacing: -0.2 } as TextStyle,
-  label: { fontSize: 11, fontWeight: '600', letterSpacing: 1.6, textTransform: 'uppercase' } as TextStyle,
-  chip: { fontSize: 12, fontWeight: '600', letterSpacing: 0.2 } as TextStyle,
-  mono: { fontSize: 13, fontWeight: '500', letterSpacing: 0.2, fontVariant: ['tabular-nums'] } as TextStyle,
-  monoLarge: { fontSize: 17, fontWeight: '600', letterSpacing: -0.2, fontVariant: ['tabular-nums'] } as TextStyle,
+  windowSub: { fontSize: 12, fontWeight: '500', letterSpacing: 0.4 } as TextStyle,
 };
 
 export const radii = { sm: 10, md: 16, lg: 18, pill: 999 };

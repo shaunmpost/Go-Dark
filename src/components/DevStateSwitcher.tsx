@@ -19,7 +19,7 @@ export function DevStateSwitcher({
 }) {
   return (
     <View style={{ gap: 8 }}>
-      <ThemedText variant="label" tone="faint" style={{ fontSize: 9 }}>
+      <ThemedText variant="foot" tone="faint" style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: 1.4 }}>
         Dev · preview state
       </ThemedText>
       <ThemedView
@@ -45,7 +45,7 @@ export function DevStateSwitcher({
                   alignItems: 'center',
                 }}
               >
-                <ThemedText variant="chip" tone={active ? 'accent' : 'muted'}>
+                <ThemedText variant="conf" tone={active ? 'accent' : 'muted'}>
                   {opt}
                 </ThemedText>
               </ThemedView>

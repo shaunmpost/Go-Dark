@@ -1,9 +1,10 @@
 /**
  * Hardcoded mock nights for Step 1–3 (static UI + the three verdict states).
  *
- * These stand in for the computed `astronomy-engine` + weather pipeline that
- * arrives in later steps. Shapes match `NightData` exactly so swapping in real
- * data is a drop-in replacement.
+ * The GO night reproduces `verdict-night-sky-mock.html` exactly — same window,
+ * bands, factor copy, and the same coreAlt/dir/sky formulas behind the live
+ * ribbon readout. MAYBE and SKIP are designed variants in the same shape.
+ * Shapes match `NightData`, so the computed pipeline drops in unchanged later.
  */
 import { NightData, RibbonSample } from './types';
 
@@ -11,87 +12,75 @@ const RIBBON_START_HOUR = 18; // 6 PM
 const RIBBON_MINUTES = 720; // through 6 AM
 const STEP = 10;
 
-function coreDirAt(min: number): string {
-  if (min < 420) return 'SE';
-  if (min < 600) return 'S';
-  return 'SW';
-}
-
-/** Smooth parabolic arc for the galactic core: rises, transits, descends. */
-function coreAltAt(min: number, rise: number, transit: number, peak: number): number {
-  const halfArc = transit - rise;
-  const k = peak / (halfArc * halfArc);
-  const alt = peak - k * (min - transit) * (min - transit);
-  return Math.round(alt * 10) / 10;
-}
-
-type SampleOpts = {
-  coreRise: number;
-  coreTransit: number;
-  corePeak: number;
-  darkStart: number;
-  darkEnd: number;
-  moonUpUntil: number; // moon above horizon for min < this
-  moonUpFrom: number; // ...and for min >= this (set high to disable)
-  cloudAt: (min: number) => number;
+type SampleFns = {
+  /** Core altitude in degrees as a function of phase p (0..1); <0 = below horizon. */
+  alt: (p: number) => number;
+  dir: (p: number) => string;
+  moonUp: (p: number) => boolean;
+  cloud: (p: number) => number;
+  sky: (p: number) => string;
 };
 
-function buildSamples(o: SampleOpts): RibbonSample[] {
+function makeSamples(fns: SampleFns): RibbonSample[] {
   const out: RibbonSample[] = [];
   for (let min = 0; min <= RIBBON_MINUTES; min += STEP) {
-    const coreAlt = coreAltAt(min, o.coreRise, o.coreTransit, o.corePeak);
-    const moonUp = min < o.moonUpUntil || min >= o.moonUpFrom;
-    const cloud = Math.max(0, Math.min(1, o.cloudAt(min)));
-    const inDark = min >= o.darkStart && min <= o.darkEnd;
-
-    let sky: string;
-    if (!inDark) sky = min < o.darkStart ? 'Twilight' : 'Dawn';
-    else if (cloud > 0.55) sky = 'Astro dark · overcast';
-    else if (cloud > 0.3) sky = 'Astro dark · clouds building';
-    else if (moonUp) sky = 'Astro dark · moon up';
-    else sky = 'Astro dark · clear';
-
-    out.push({ minutes: min, coreAlt, coreDir: coreDirAt(min), cloud, moonUp, sky });
+    const p = min / RIBBON_MINUTES;
+    out.push({
+      minutes: min,
+      coreAlt: fns.alt(p),
+      coreDir: fns.dir(p),
+      moonUp: fns.moonUp(p),
+      cloud: Math.max(0, Math.min(1, fns.cloud(p))),
+      sky: fns.sky(p),
+    });
   }
   return out;
 }
 
-// --- GO: a long clear window, moon down early -------------------------------
+/** Sinusoidal core arc between rise and set phases (matches the mock). */
+function sinAlt(riseP: number, setP: number, peak: number) {
+  return (p: number) => {
+    if (p < riseP || p > setP) return -1;
+    return Math.round(peak * Math.sin(Math.PI * ((p - riseP) / (setP - riseP))));
+  };
+}
+
+/** Shared SE -> S -> SW sweep used across the night. */
+const sweepDir = (p: number) => (p < 0.55 ? 'SE' : p < 0.7 ? 'S' : 'SW');
+
+// --- GO: a long clear window, moon down early (mirrors the mock) ------------
 
 export const GO_NIGHT: NightData = {
   locationLabel: 'Pine Ridge Overlook',
   dateLabel: 'Tonight',
   state: 'GO',
   confidence: 'High',
-  headline: 'A long, dark, clear window with the core riding high in the south.',
-  window: { start: 270, end: 600 }, // 10:30 PM -> 4:00 AM
+  headline: 'Clear and moonless. The Milky Way core clears the ridge around midnight.',
+  window: { start: 342, end: 571 }, // 11:42 PM -> 3:31 AM
   factors: [
-    { key: 'darkness', label: 'Darkness', value: '5h 12m astronomical dark', score: 0.9 },
-    { key: 'cloud', label: 'Cloud cover', value: '8% during the window', score: 0.88 },
-    { key: 'moon', label: 'Moon', value: '12% · sets 8:10 PM', score: 0.92 },
-    { key: 'transparency', label: 'Transparency', value: 'Above average', score: 0.7 },
-    { key: 'seeing', label: 'Seeing', value: 'Average', score: 0.55 },
-    { key: 'core', label: 'Core position', value: 'Peaks 31° in the south', score: 0.8 },
+    { key: 'darkness', label: 'Darkness', value: 'Astronomical · excellent', score: 0.96 },
+    { key: 'cloud', label: 'Cloud cover', value: '4% · clear', score: 0.94 },
+    { key: 'moon', label: 'Moon', value: 'Sets 9:30 PM · down all window', score: 0.98 },
+    { key: 'transparency', label: 'Transparency', value: 'Above average', score: 0.78 },
+    { key: 'seeing', label: 'Seeing', value: 'Fair · some high-altitude turbulence', score: 0.52 },
+    { key: 'core', label: 'Core position', value: 'Rises 11:42 · peaks 2:10 SE', score: 0.88 },
   ],
   darkBand: { start: 180, end: 660 },
-  moonBands: [{ start: 0, end: 130 }],
-  cloudBands: [{ start: 600, end: 660 }],
-  coreRiseMinutes: 270,
-  samples: buildSamples({
-    coreRise: 270,
-    coreTransit: 510,
-    corePeak: 31,
-    darkStart: 180,
-    darkEnd: 660,
-    moonUpUntil: 130,
-    moonUpFrom: 9999,
-    cloudAt: (m) => (m > 590 ? (m - 590) / 200 : 0.05),
+  moonBands: [{ start: 0, end: 209 }],
+  cloudBands: [{ start: 634, end: 720 }],
+  coreRiseMinutes: 342,
+  samples: makeSamples({
+    alt: sinAlt(0.475, 0.96, 33),
+    dir: sweepDir,
+    moonUp: (p) => p < 0.29,
+    cloud: (p) => (p > 0.88 ? 0.45 : 0.04),
+    sky: (p) => (p < 0.29 ? 'Moon up · washed out' : p > 0.88 ? 'Clouds moving in' : 'Clear'),
   }),
   bestNight: {
-    dayLabel: 'Tonight',
-    summary: 'is already your best night this week — go.',
+    title: 'Thursday is your best night this month',
+    body: 'New moon, clear skies forecast, and the core stays up until nearly 4 AM.',
   },
-  forecastNote: 'Forecast confidence is high and firms up further after sunset.',
+  forecastNote: 'Forecast firms up over the next 48 hours',
 };
 
 // --- MAYBE: clear, but a bright moon washes out the core --------------------
@@ -101,35 +90,32 @@ export const MAYBE_NIGHT: NightData = {
   dateLabel: 'Tonight',
   state: 'MAYBE',
   confidence: 'Medium',
-  headline: 'Clear skies, but the moon washes out the core until about 2 AM.',
+  headline: 'Clear, but the moon washes out the core until about 2 AM.',
   window: { start: 480, end: 640 }, // 2:00 AM -> 4:40 AM
   factors: [
-    { key: 'darkness', label: 'Darkness', value: '5h 30m astronomical dark', score: 0.85 },
-    { key: 'cloud', label: 'Cloud cover', value: '11% overnight', score: 0.84 },
-    { key: 'moon', label: 'Moon', value: '78% · sets 2:00 AM', score: 0.32 },
-    { key: 'transparency', label: 'Transparency', value: 'Good', score: 0.72 },
-    { key: 'seeing', label: 'Seeing', value: 'Above average', score: 0.68 },
-    { key: 'core', label: 'Core position', value: 'Peaks 29° in the south', score: 0.78 },
+    { key: 'darkness', label: 'Darkness', value: 'Astronomical · excellent', score: 0.85 },
+    { key: 'cloud', label: 'Cloud cover', value: '9% · clear', score: 0.86 },
+    { key: 'moon', label: 'Moon', value: '78% · sets 2:00 AM', score: 0.3 },
+    { key: 'transparency', label: 'Transparency', value: 'Good', score: 0.74 },
+    { key: 'seeing', label: 'Seeing', value: 'Average', score: 0.66 },
+    { key: 'core', label: 'Core position', value: 'Rises 9:40 · peaks 3:10 S', score: 0.8 },
   ],
   darkBand: { start: 175, end: 665 },
   moonBands: [{ start: 0, end: 480 }],
   cloudBands: [],
   coreRiseMinutes: 280,
-  samples: buildSamples({
-    coreRise: 280,
-    coreTransit: 520,
-    corePeak: 29,
-    darkStart: 175,
-    darkEnd: 665,
-    moonUpUntil: 480,
-    moonUpFrom: 9999,
-    cloudAt: () => 0.08,
+  samples: makeSamples({
+    alt: sinAlt(0.389, 0.97, 30),
+    dir: sweepDir,
+    moonUp: (p) => p < 0.667,
+    cloud: () => 0.08,
+    sky: (p) => (p < 0.667 ? 'Moon up · core washed' : 'Clear'),
   }),
   bestNight: {
-    dayLabel: 'Thursday',
-    summary: 'is your best night this month — new moon and a clear, transparent sky.',
+    title: 'Thursday is still your best night',
+    body: 'New moon and a darker, more transparent sky than tonight.',
   },
-  forecastNote: 'Forecast confidence is medium; the moonset timing is reliable.',
+  forecastNote: 'Forecast firms up over the next 48 hours',
 };
 
 // --- SKIP: clouded out, but the door stays open -----------------------------
@@ -139,35 +125,32 @@ export const SKIP_NIGHT: NightData = {
   dateLabel: 'Tonight',
   state: 'SKIP',
   confidence: 'High',
-  headline: 'Thick cloud rolls in after dusk — no usable dark window tonight.',
+  headline: 'Thick cloud rolls in after dusk — no usable window tonight.',
   window: null,
   factors: [
-    { key: 'darkness', label: 'Darkness', value: '5h 18m astronomical dark', score: 0.88 },
-    { key: 'cloud', label: 'Cloud cover', value: '84% through the window', score: 0.12 },
+    { key: 'darkness', label: 'Darkness', value: 'Astronomical · excellent', score: 0.88 },
+    { key: 'cloud', label: 'Cloud cover', value: '86% · overcast', score: 0.1 },
     { key: 'moon', label: 'Moon', value: '34% · sets 11:20 PM', score: 0.7 },
-    { key: 'transparency', label: 'Transparency', value: 'Poor', score: 0.2 },
-    { key: 'seeing', label: 'Seeing', value: 'Below average', score: 0.35 },
-    { key: 'core', label: 'Core position', value: 'Peaks 30° in the south', score: 0.8 },
+    { key: 'transparency', label: 'Transparency', value: 'Poor', score: 0.18 },
+    { key: 'seeing', label: 'Seeing', value: 'Below average', score: 0.34 },
+    { key: 'core', label: 'Core position', value: 'Rises 11:35 · peaks 2:05 S', score: 0.8 },
   ],
   darkBand: { start: 180, end: 660 },
   moonBands: [{ start: 0, end: 320 }],
   cloudBands: [{ start: 60, end: 720 }],
   coreRiseMinutes: 275,
-  samples: buildSamples({
-    coreRise: 275,
-    coreTransit: 515,
-    corePeak: 30,
-    darkStart: 180,
-    darkEnd: 660,
-    moonUpUntil: 320,
-    moonUpFrom: 9999,
-    cloudAt: (m) => (m < 60 ? 0.2 : 0.85),
+  samples: makeSamples({
+    alt: sinAlt(0.382, 0.96, 31),
+    dir: sweepDir,
+    moonUp: (p) => p < 0.444,
+    cloud: (p) => (p < 0.083 ? 0.25 : 0.86),
+    sky: (p) => (p < 0.083 ? 'Clearing edge' : 'Overcast'),
   }),
   bestNight: {
-    dayLabel: 'Thursday',
-    summary: 'looks perfect — clear, new moon, core climbs to 31° in the south.',
+    title: 'Thursday looks perfect',
+    body: 'Clear skies, new moon, and the core climbs to 31° in the south.',
   },
-  forecastNote: 'Cloud forecast is in strong agreement across sources.',
+  forecastNote: 'Cloud forecast is in strong agreement across sources',
 };
 
 export const MOCK_NIGHTS = {

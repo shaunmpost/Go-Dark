@@ -1,7 +1,8 @@
 /**
- * "Why tonight" — progressive disclosure. A tappable row that expands a
- * scorecard of the six factors, each with a value line and a thin bar. Height
- * and chevron animate smoothly; collapsed by default.
+ * "Why tonight" — progressive disclosure. A single-line tappable pill that
+ * expands a scorecard of the six factors, each with a value line and a thin
+ * bar. Height and chevron animate smoothly; collapsed by default. Matches the
+ * mock: the pill is bordered, the factors expand flush beneath it.
  */
 import React, { useState } from 'react';
 import { LayoutChangeEvent, Pressable, View } from 'react-native';
@@ -11,7 +12,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Icon } from './Icon';
-import { ColorKey, radii, space, ThemedText, ThemedView } from '@/lib/theme';
+import { ColorKey, radii, ThemedText, ThemedView } from '@/lib/theme';
 import { Factor } from '@/lib/types';
 
 function toneForScore(score: number): ColorKey {
@@ -20,24 +21,42 @@ function toneForScore(score: number): ColorKey {
   return 'skip';
 }
 
-function FactorRow({ factor }: { factor: Factor }) {
-  const fillTone = toneForScore(factor.score);
+function FactorRow({ factor, last }: { factor: Factor; last: boolean }) {
   return (
-    <View style={{ gap: 8 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <ThemedText variant="bodyStrong" tone="text">
+    <ThemedView
+      border={last ? undefined : 'hairline'}
+      style={{
+        paddingVertical: 15,
+        paddingHorizontal: 4,
+        gap: 9,
+        borderWidth: 0,
+        borderBottomWidth: last ? 0 : 1,
+      }}
+    >
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <ThemedText variant="fname" tone="text">
           {factor.label}
         </ThemedText>
-        <ThemedText variant="mono" tone="muted">
+        <ThemedText variant="fval" tone="muted">
           {factor.value}
         </ThemedText>
       </View>
-      <ThemedView tone="hairline" style={{ height: 3, borderRadius: 2, overflow: 'hidden' }}>
+      <ThemedView tone="hairlineStrong" style={{ height: 4, borderRadius: 4, overflow: 'hidden' }}>
         <ThemedView
-          tone={fillTone}
-          style={{ height: 3, borderRadius: 2, width: `${Math.round(factor.score * 100)}%` }}
+          tone={toneForScore(factor.score)}
+          style={{ height: 4, borderRadius: 4, width: `${Math.round(factor.score * 100)}%` }}
         />
       </ThemedView>
+    </ThemedView>
+  );
+}
+
+function FactorList({ factors }: { factors: Factor[] }) {
+  return (
+    <View style={{ paddingHorizontal: 4, paddingTop: 8 }}>
+      {factors.map((f, i) => (
+        <FactorRow key={f.key} factor={f} last={i === factors.length - 1} />
+      ))}
     </View>
   );
 }
@@ -50,7 +69,7 @@ export function Scorecard({ factors }: { factors: Factor[] }) {
   const toggle = () => {
     const next = !open;
     setOpen(next);
-    progress.value = withTiming(next ? 1 : 0, { duration: 300 });
+    progress.value = withTiming(next ? 1 : 0, { duration: 420 });
   };
 
   const containerStyle = useAnimatedStyle(() => ({
@@ -67,66 +86,51 @@ export function Scorecard({ factors }: { factors: Factor[] }) {
   };
 
   return (
-    <ThemedView
-      tone="panel"
-      border
-      style={{ borderRadius: radii.lg, overflow: 'hidden' }}
-    >
+    <View>
       <Pressable
         onPress={toggle}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: space.lg,
-          paddingVertical: space.lg,
-        }}
       >
-        <View>
-          <ThemedText variant="bodyStrong" tone="text">
-            Why tonight
-          </ThemedText>
-          <ThemedText variant="mono" tone="faint" style={{ marginTop: 2 }}>
-            {open ? 'The six factors' : 'Tap to see the six factors'}
-          </ThemedText>
-        </View>
-        <Animated.View style={chevronStyle}>
-          <Icon name="chevron" size={20} tone="muted" />
-        </Animated.View>
+        <ThemedView
+          tone="panel"
+          border
+          style={{
+            borderRadius: radii.md,
+            paddingVertical: 17,
+            paddingHorizontal: 20,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 11 }}>
+            <Icon name="info" size={18} tone="accent" />
+            <ThemedText variant="toggle" tone="text">
+              Why tonight
+            </ThemedText>
+          </View>
+          <Animated.View style={chevronStyle}>
+            <Icon name="chevron" size={18} tone="muted" />
+          </Animated.View>
+        </ThemedView>
       </Pressable>
 
       {/* Animated viewport */}
       <Animated.View style={[{ overflow: 'hidden' }, containerStyle]}>
-        <View
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            paddingHorizontal: space.lg,
-            paddingBottom: space.lg,
-            gap: space.lg,
-          }}
-        >
-          {factors.map((f) => (
-            <FactorRow key={f.key} factor={f} />
-          ))}
+        <View style={{ position: 'absolute', left: 0, right: 0 }}>
+          <FactorList factors={factors} />
         </View>
       </Animated.View>
 
-      {/* Hidden measurement copy (no flicker; sets contentH once). */}
+      {/* Hidden measurement copy (sets contentH once, no flicker). */}
       <View
         style={{ position: 'absolute', opacity: 0, left: 0, right: 0 }}
         pointerEvents="none"
         onLayout={onContentLayout}
       >
-        <View style={{ paddingHorizontal: space.lg, paddingBottom: space.lg, gap: space.lg }}>
-          {factors.map((f) => (
-            <FactorRow key={`measure-${f.key}`} factor={f} />
-          ))}
-        </View>
+        <FactorList factors={factors} />
       </View>
-    </ThemedView>
+    </View>
   );
 }

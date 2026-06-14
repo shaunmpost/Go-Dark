@@ -14,13 +14,18 @@ import { ColorKey, fieldPalette, nightPalette, useTheme } from '@/lib/theme';
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const PATHS = {
-  // Feather "moon"
-  moon: 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z',
+  // Crescent moon (field-mode toggle)
+  moon: 'M21 12.8A8.5 8.5 0 1 1 11.2 3 6.6 6.6 0 0 0 21 12.8z',
   // Chevron down
   chevron: 'M6 9l6 6 6-6',
-  // Map pin
-  pin: 'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z',
-  pinDot: 'M12 10.5m-2.5 0a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0',
+  // Map pin with dot (location)
+  pin: 'M12 21s-7-6.3-7-11a7 7 0 1 1 14 0c0 4.7-7 11-7 11z M12 10m-2.4 0a2.4 2.4 0 1 0 4.8 0a2.4 2.4 0 1 0 -4.8 0',
+  // Check (confidence chip)
+  check: 'M20 6 9 17l-5-5',
+  // Info circle (Why tonight)
+  info: 'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z M12 16v-4 M12 8h.01',
+  // Bell (best-night nudge)
+  bell: 'M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0',
 } as const;
 
 export type IconName = keyof typeof PATHS;

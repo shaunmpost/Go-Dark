@@ -65,10 +65,10 @@ export type NightData = {
   coreRiseMinutes: number | null; // when the core clears the horizon
   samples: RibbonSample[];
 
-  /** Best upcoming night nudge. */
+  /** Best upcoming night nudge (title + supporting line). */
   bestNight: {
-    dayLabel: string; // "Thursday"
-    summary: string; // "clear, new moon, core climbs to 28°"
+    title: string; // "Thursday is your best night this month"
+    body: string; // "New moon, clear skies forecast, and the core stays up..."
   } | null;
 
   /** Footer note about forecast confidence. */

@@ -13,7 +13,7 @@ import { Scorecard } from '@/components/Scorecard';
 import { TopBar } from '@/components/TopBar';
 import { Verdict } from '@/components/Verdict';
 import { MOCK_NIGHTS } from '@/lib/mock-data';
-import { space, ThemedText, ThemedView } from '@/lib/theme';
+import { ThemedText, ThemedView } from '@/lib/theme';
 import { VerdictState } from '@/lib/types';
 
 export default function TonightScreen() {
@@ -24,31 +24,34 @@ export default function TonightScreen() {
     <ThemedView tone="bg" style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
         <ScrollView
-          contentContainerStyle={{
-            paddingHorizontal: space.xl,
-            paddingTop: space.md,
-            paddingBottom: space.xxl * 2,
-            gap: space.xl,
-          }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 8, paddingBottom: 56 }}
           showsVerticalScrollIndicator={false}
         >
-          <TopBar dateLabel={night.dateLabel} location={night.locationLabel} />
-
-          <View style={{ marginTop: space.sm }}>
-            <Verdict night={night} />
+          <View style={{ marginTop: 10, marginBottom: 30 }}>
+            <TopBar dateLabel={night.dateLabel} location={night.locationLabel} />
           </View>
 
-          <NightRibbon night={night} />
+          <Verdict night={night} />
 
-          <Scorecard factors={night.factors} />
+          <View style={{ marginTop: 36 }}>
+            <NightRibbon night={night} />
+          </View>
 
-          <NudgeCard night={night} />
+          <View style={{ marginTop: 28 }}>
+            <Scorecard factors={night.factors} />
+          </View>
 
-          <ThemedText variant="mono" tone="faint" style={{ textAlign: 'center', marginTop: space.xs }}>
+          <View style={{ marginTop: 26 }}>
+            <NudgeCard night={night} />
+          </View>
+
+          <ThemedText variant="foot" tone="faint" style={{ textAlign: 'center', marginTop: 30 }}>
             {night.forecastNote}
           </ThemedText>
 
-          <DevStateSwitcher value={state} onChange={setState} />
+          <View style={{ marginTop: 28 }}>
+            <DevStateSwitcher value={state} onChange={setState} />
+          </View>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>

@@ -5,11 +5,11 @@
  *   • sky gradient (bright twilight at the edges, darkest mid-night)
  *   • hatched moon-up band(s)
  *   • translucent cloud band(s)
- *   • the glowing "best window" band
+ *   • the glowing "best window" band with a label
  *   • a "core ↑" rise marker
  * A draggable handle scrubs it (Reanimated + gesture-handler, runs on the UI
- * thread); a live readout above shows time, core altitude/direction, and sky
- * state at the handle. Tap-to-jump is supported too.
+ * thread); a live readout in the section header shows time, core altitude/
+ * direction, and sky state at the handle. Tap-to-jump is supported too.
  */
 import React, { useState } from 'react';
 import { LayoutChangeEvent, View } from 'react-native';
@@ -27,7 +27,6 @@ import {
   fieldPalette,
   nightPalette,
   radii,
-  space,
   ThemedText,
   ThemedView,
   useColorValue,
@@ -39,61 +38,44 @@ import { minutesToClock, RIBBON } from '@/lib/mock-data';
 const TRACK_H = 96;
 const TOTAL = RIBBON.totalMinutes;
 
-const HOUR_TICKS = [
-  { min: 0, label: '6 PM' },
-  { min: 180, label: '9 PM' },
-  { min: 360, label: '12 AM' },
-  { min: 540, label: '3 AM' },
-  { min: 720, label: '6 AM' },
-];
+const HOUR_TICKS = ['6 PM', '9 PM', '12 AM', '3 AM', '6 AM'];
+
+const ABSOLUTE_FILL = { position: 'absolute' as const, left: 0, right: 0, top: 0, bottom: 0 };
 
 function clamp(v: number, lo: number, hi: number) {
   'worklet';
   return Math.min(Math.max(v, lo), hi);
 }
 
-/** Crossfading sky gradient (night palette under, field palette over). */
+/** Crossfading sky gradient: 4-stop so the middle of the night sits flat-dark. */
 function SkyGradient() {
   const { t } = useTheme();
   const fieldStyle = useAnimatedStyle(() => ({ opacity: t.value }));
+  const stops = { locations: [0, 0.42, 0.58, 1] as const, start: { x: 0, y: 0 }, end: { x: 1, y: 0 } };
   return (
-    <View style={{ ...StyleSheetAbsolute }}>
+    <View style={ABSOLUTE_FILL}>
       <LinearGradient
-        colors={[nightPalette.ribbonEdge, nightPalette.ribbonCenter, nightPalette.ribbonEdge]}
-        locations={[0, 0.5, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={StyleSheetAbsolute}
+        colors={[nightPalette.ribbonEdge, nightPalette.ribbonCenter, nightPalette.ribbonCenter, nightPalette.ribbonEdge]}
+        {...stops}
+        style={ABSOLUTE_FILL}
       />
-      <Animated.View style={[StyleSheetAbsolute, fieldStyle]}>
+      <Animated.View style={[ABSOLUTE_FILL, fieldStyle]}>
         <LinearGradient
-          colors={[fieldPalette.ribbonEdge, fieldPalette.ribbonCenter, fieldPalette.ribbonEdge]}
-          locations={[0, 0.5, 1]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={StyleSheetAbsolute}
+          colors={[fieldPalette.ribbonEdge, fieldPalette.ribbonCenter, fieldPalette.ribbonCenter, fieldPalette.ribbonEdge]}
+          {...stops}
+          style={ABSOLUTE_FILL}
         />
       </Animated.View>
     </View>
   );
 }
 
-const StyleSheetAbsolute = {
-  position: 'absolute' as const,
-  left: 0,
-  right: 0,
-  top: 0,
-  bottom: 0,
-};
-
 export function NightRibbon({ night }: { night: NightData }) {
   const [w, setW] = useState(0);
-  const [readoutIdx, setReadoutIdx] = useState(() =>
-    Math.round((night.window ? (night.window.start + night.window.end) / 2 : 360) / RIBBON.step),
-  );
+  const initialMin = night.window ? (night.window.start + night.window.end) / 2 : 360;
+  const [readoutIdx, setReadoutIdx] = useState(() => Math.round(initialMin / RIBBON.step));
 
   const trackW = useSharedValue(0);
-  const initialMin = night.window ? (night.window.start + night.window.end) / 2 : 360;
   const handleMin = useSharedValue(initialMin);
 
   const moonHatch = useColorValue('moonBand');
@@ -107,13 +89,11 @@ export function NightRibbon({ night }: { night: NightData }) {
 
   const xOf = (min: number) => (w === 0 ? 0 : (min / TOTAL) * w);
 
-  // Push the snapped sample index to JS only when it actually changes.
   useAnimatedReaction(
     () => Math.round(handleMin.value / RIBBON.step),
     (idx, prev) => {
       if (idx !== prev) {
-        const clamped = Math.min(Math.max(idx, 0), night.samples.length - 1);
-        runOnJS(setReadoutIdx)(clamped);
+        runOnJS(setReadoutIdx)(Math.min(Math.max(idx, 0), night.samples.length - 1));
       }
     },
   );
@@ -141,46 +121,49 @@ export function NightRibbon({ night }: { night: NightData }) {
     sample.coreAlt > 0 ? `Core ${Math.round(sample.coreAlt)}° ${sample.coreDir}` : 'Core below horizon';
 
   return (
-    <View style={{ gap: space.md }}>
-      {/* Live readout */}
-      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.md }}>
-        <ThemedText variant="monoLarge" tone="text">
-          {minutesToClock(sample.minutes)}
+    <View style={{ gap: 9 }}>
+      {/* Section header with live readout */}
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          marginBottom: 7,
+        }}
+      >
+        <ThemedText variant="sectionH" tone="muted">
+          The night
         </ThemedText>
-        <ThemedText variant="mono" tone="muted">
-          {coreText}
-        </ThemedText>
-        <ThemedText variant="mono" tone="faint" style={{ marginLeft: 'auto' }}>
-          {sample.sky}
+        <ThemedText variant="readout" tone="muted" style={{ flexShrink: 1, textAlign: 'right' }}>
+          <ThemedText variant="readout" tone="accent">
+            {minutesToClock(sample.minutes)}
+          </ThemedText>
+          {`  ·  ${coreText}  ·  ${sample.sky}`}
         </ThemedText>
       </View>
 
       {/* Track */}
       <GestureDetector gesture={gesture}>
-        <View
+        <ThemedView
+          border
           onLayout={onLayout}
-          style={{
-            height: TRACK_H,
-            borderRadius: radii.md,
-            overflow: 'hidden',
-            justifyContent: 'center',
-          }}
+          style={{ height: TRACK_H, borderRadius: radii.lg, overflow: 'hidden' }}
         >
           <SkyGradient />
 
           {w > 0 && (
             <>
               {/* Hatched moon bands + cloud bands via SVG */}
-              <Svg width={w} height={TRACK_H} style={StyleSheetAbsolute}>
+              <Svg width={w} height={TRACK_H} style={ABSOLUTE_FILL}>
                 <Defs>
                   <Pattern
                     id="moonHatch"
                     patternUnits="userSpaceOnUse"
-                    width={7}
-                    height={7}
+                    width={12}
+                    height={12}
                     patternTransform="rotate(45)"
                   >
-                    <Line x1={0} y1={0} x2={0} y2={7} stroke={moonHatch} strokeWidth={1.2} />
+                    <Rect x={0} y={0} width={6} height={12} fill={moonHatch} />
                   </Pattern>
                 </Defs>
                 {night.moonBands.map((b: TimeBand, i: number) => (
@@ -207,50 +190,35 @@ export function NightRibbon({ night }: { night: NightData }) {
 
               {/* Best-window glow band */}
               {night.window && (
-                <BestWindowBand left={xOf(night.window.start)} width={xOf(night.window.end) - xOf(night.window.start)} />
+                <BestWindowBand
+                  left={xOf(night.window.start)}
+                  width={xOf(night.window.end) - xOf(night.window.start)}
+                />
               )}
 
               {/* Core rise marker */}
-              {night.coreRiseMinutes != null && (
-                <CoreMarker left={xOf(night.coreRiseMinutes)} />
-              )}
+              {night.coreRiseMinutes != null && <CoreMarker left={xOf(night.coreRiseMinutes)} />}
 
               {/* Scrub handle */}
               <Animated.View
-                style={[
-                  { position: 'absolute', top: 0, bottom: 0, width: 2, marginLeft: -1 },
-                  handleStyle,
-                ]}
+                style={[{ position: 'absolute', top: -4, bottom: -4, width: 2, marginLeft: -1 }, handleStyle]}
                 pointerEvents="none"
               >
-                <ThemedView tone="text" style={{ flex: 1, opacity: 0.9 }} />
-                <View
-                  style={{
-                    position: 'absolute',
-                    top: -5,
-                    left: -6,
-                    width: 14,
-                    height: 14,
-                    borderRadius: 7,
-                  }}
-                >
-                  <ThemedView
-                    tone="text"
-                    border="bg"
-                    style={{ flex: 1, borderRadius: 7, borderWidth: 2 }}
-                  />
+                <ThemedView tone="text" style={{ flex: 1 }} />
+                <View style={{ position: 'absolute', top: -5, left: -5, width: 11, height: 11 }}>
+                  <ThemedView tone="text" style={{ flex: 1, borderRadius: 6 }} />
                 </View>
               </Animated.View>
             </>
           )}
-        </View>
+        </ThemedView>
       </GestureDetector>
 
       {/* Hour ticks */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        {HOUR_TICKS.map((tick) => (
-          <ThemedText key={tick.min} variant="label" tone="faint" style={{ fontSize: 10 }}>
-            {tick.label}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 2 }}>
+        {HOUR_TICKS.map((label) => (
+          <ThemedText key={label} variant="tick" tone="faint">
+            {label}
           </ThemedText>
         ))}
       </View>
@@ -260,30 +228,40 @@ export function NightRibbon({ night }: { night: NightData }) {
 
 /** Glowing accent band marking the recommended shooting window. */
 function BestWindowBand({ left, width }: { left: number; width: number }) {
+  const accentDim = useColorValue('accentDim');
   return (
-    <View
-      style={{ position: 'absolute', top: 0, bottom: 0, left, width }}
-      pointerEvents="none"
-    >
-      <ThemedView tone="accentDim" style={{ flex: 1 }} />
-      <ThemedView tone="accent" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 2, opacity: 0.9 }} />
-      <ThemedView tone="accent" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, opacity: 0.9 }} />
-      <ThemedView tone="glow" style={{ position: 'absolute', left: -1, top: 0, bottom: 0, width: 2 }} />
-      <ThemedView tone="glow" style={{ position: 'absolute', right: -1, top: 0, bottom: 0, width: 2 }} />
+    <View style={{ position: 'absolute', top: 0, bottom: 0, left, width }} pointerEvents="none">
+      <LinearGradient
+        colors={[accentDim, 'transparent']}
+        locations={[0, 0.8]}
+        style={ABSOLUTE_FILL}
+      />
+      <ThemedView tone="accent" style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 1 }} />
+      <ThemedView tone="accent" style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 1 }} />
+      <ThemedView tone="accent" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 2 }} />
+      <ThemedText
+        variant="eyebrow"
+        tone="accent"
+        style={{ position: 'absolute', top: 8, alignSelf: 'center', fontSize: 9.5, letterSpacing: 1.4, fontWeight: '700' }}
+      >
+        Best window
+      </ThemedText>
     </View>
   );
 }
 
-/** "core ↑" rise marker — a thin vertical line with a small label. */
+/** "core ↑" rise marker — a thin vertical line with a small bottom label. */
 function CoreMarker({ left }: { left: number }) {
   return (
     <View style={{ position: 'absolute', top: 0, bottom: 0, left }} pointerEvents="none">
-      <ThemedView tone="muted" style={{ width: 1, flex: 1, opacity: 0.5 }} />
-      <View style={{ position: 'absolute', top: 4, left: 4, flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-        <ThemedText variant="label" tone="muted" style={{ fontSize: 9 }}>
-          core ↑
-        </ThemedText>
-      </View>
+      <ThemedView tone="text" style={{ width: 1, flex: 1, opacity: 0.5 }} />
+      <ThemedText
+        variant="tick"
+        tone="text"
+        style={{ position: 'absolute', bottom: 6, left: 4, fontSize: 9, opacity: 0.6, letterSpacing: 0.5 }}
+      >
+        core ↑
+      </ThemedText>
     </View>
   );
 }
