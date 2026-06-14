@@ -1,0 +1,58 @@
+/**
+ * DEV ONLY — a segmented control to preview the GO / MAYBE / SKIP states while
+ * the data pipeline is still mocked. Remove (or hide behind __DEV__) once the
+ * verdict is computed end-to-end in Step 5.
+ */
+import React from 'react';
+import { Pressable, View } from 'react-native';
+import { radii, space, ThemedText, ThemedView } from '@/lib/theme';
+import { VerdictState } from '@/lib/types';
+
+const OPTIONS: VerdictState[] = ['GO', 'MAYBE', 'SKIP'];
+
+export function DevStateSwitcher({
+  value,
+  onChange,
+}: {
+  value: VerdictState;
+  onChange: (v: VerdictState) => void;
+}) {
+  return (
+    <View style={{ gap: 8 }}>
+      <ThemedText variant="label" tone="faint" style={{ fontSize: 9 }}>
+        Dev · preview state
+      </ThemedText>
+      <ThemedView
+        tone="panel"
+        border
+        style={{ flexDirection: 'row', borderRadius: radii.pill, padding: 4 }}
+      >
+        {OPTIONS.map((opt) => {
+          const active = opt === value;
+          return (
+            <Pressable
+              key={opt}
+              onPress={() => onChange(opt)}
+              style={{ flex: 1 }}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+            >
+              <ThemedView
+                tone={active ? 'accentDim' : undefined}
+                style={{
+                  paddingVertical: space.sm,
+                  borderRadius: radii.pill,
+                  alignItems: 'center',
+                }}
+              >
+                <ThemedText variant="chip" tone={active ? 'accent' : 'muted'}>
+                  {opt}
+                </ThemedText>
+              </ThemedView>
+            </Pressable>
+          );
+        })}
+      </ThemedView>
+    </View>
+  );
+}
