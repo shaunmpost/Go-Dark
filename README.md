@@ -48,6 +48,7 @@ src/
     best-night.ts      multi-day best-night finder (next ~14 nights)
     location.ts        device location via expo-location
     store.ts           zustand (saved locations, unlock) persisted
+    purchases.ts       one-time unlock IAP seam (stubbed)
     mock-data.ts       hardcoded GO / MAYBE / SKIP nights
   config/
     verdict-weights.ts the single tunable config for the verdict
@@ -83,7 +84,20 @@ Tokens live in one place: `src/lib/theme.tsx`.
 - [x] **Step 6** — device location (expo-location), saved locations (zustand +
       AsyncStorage, persisted) via a Locations screen, and the multi-day
       best-night finder that powers the nudge from the next ~14 nights.
-- [ ] **Step 7** — finish the one-time unlock gate (wire the stubbed purchase).
+- [x] **Step 7** — one-time unlock gate. A single IAP seam (`lib/purchases.ts`,
+      non-consumable, no subscriptions) wired through the store + paywall with
+      buy / restore / loading / error states and a launch-time entitlement
+      check. The store-side `isUnlocked` gates saved locations + the planner.
+      The purchase itself is stubbed with clear TODOs for react-native-iap /
+      RevenueCat.
+
+### v1 complete
+
+All seven build steps are in. Free tier = tonight's verdict + ribbon + why for
+the current location; the one-time unlock adds saved locations and the multi-day
+planner. Remaining before store submission: real IAP wiring (the
+`lib/purchases.ts` TODOs), app icons/splash art, and on-device QA against the
+live weather endpoints.
 
 > A temporary **Dev · preview state** switcher at the bottom of the screen flips
 > GO / MAYBE / SKIP (mock-exact reference nights) plus **LIVE** (real on-device

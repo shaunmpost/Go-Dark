@@ -4,14 +4,15 @@
  * part of the one-time unlock; locked users see the gate.
  */
 import React, { useEffect, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
 import { DEFAULT_LOCATION } from '@/config/data-sources';
 import { getDeviceLocation } from '@/lib/location';
+import { purchaseUnlock, restorePurchases, UNLOCK_PRICE } from '@/lib/purchases';
 import { useStore } from '@/lib/store';
-import { radii, space, ThemedText, ThemedView } from '@/lib/theme';
+import { radii, ThemedText, ThemedView, useTheme } from '@/lib/theme';
 import { Geo } from '@/lib/types';
 
 function coords(g: Geo) {
@@ -170,7 +171,7 @@ export default function LocationsScreen() {
               </Pressable>
             </>
           ) : (
-            <Paywall onUnlock={unlock} />
+            <Paywall onUnlocked={unlock} />
           )}
         </ScrollView>
       </SafeAreaView>
@@ -178,13 +179,23 @@ export default function LocationsScreen() {
   );
 }
 
-function Paywall({ onUnlock }: { onUnlock: () => void }) {
+function Paywall({ onUnlocked }: { onUnlocked: () => void }) {
+  const { palette } = useTheme();
+  const [busy, setBusy] = useState<'idle' | 'buy' | 'restore'>('idle');
+  const [error, setError] = useState<string | null>(null);
+
+  const run = async (which: 'buy' | 'restore') => {
+    if (busy !== 'idle') return;
+    setBusy(which);
+    setError(null);
+    const result = which === 'buy' ? await purchaseUnlock() : await restorePurchases();
+    setBusy('idle');
+    if (result.ok) onUnlocked();
+    else if (!result.cancelled) setError(result.error ?? 'Something went wrong. Please try again.');
+  };
+
   return (
-    <ThemedView
-      tone="panel"
-      border
-      style={{ borderRadius: radii.lg, padding: 20, marginTop: 18, gap: 12 }}
-    >
+    <ThemedView tone="panel" border style={{ borderRadius: radii.lg, padding: 20, marginTop: 18, gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <ThemedView
           tone="accentDim"
@@ -196,24 +207,53 @@ function Paywall({ onUnlock }: { onUnlock: () => void }) {
           Saved locations are part of the one-time unlock
         </ThemedText>
       </View>
+
       <ThemedText variant="nudgeBody" tone="muted">
         Unlock unlimited saved locations, the multi-day best-night planner, and deep-sky
         planning — once. No subscription, ever.
       </ThemedText>
-      <Pressable onPress={onUnlock}>
+
+      <Pressable onPress={() => run('buy')} disabled={busy !== 'idle'}>
         <ThemedView
           tone="accent"
-          style={{ borderRadius: radii.md, paddingVertical: 14, alignItems: 'center' }}
+          style={{
+            borderRadius: radii.md,
+            paddingVertical: 14,
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 50,
+            opacity: busy === 'buy' ? 0.85 : 1,
+          }}
         >
-          {/* On bg color we want dark text for contrast against the accent fill. */}
-          <ThemedText variant="toggle" tone="bg">
-            Unlock everything · $10.99
-          </ThemedText>
+          {busy === 'buy' ? (
+            <ActivityIndicator color={palette.bg} />
+          ) : (
+            // Dark text for contrast against the accent fill.
+            <ThemedText variant="toggle" tone="bg">
+              Unlock everything · {UNLOCK_PRICE}
+            </ThemedText>
+          )}
         </ThemedView>
       </Pressable>
+
+      {error ? (
+        <ThemedText variant="fval" tone="skip" style={{ textAlign: 'center' }}>
+          {error}
+        </ThemedText>
+      ) : null}
+
+      <Pressable onPress={() => run('restore')} disabled={busy !== 'idle'} style={{ paddingVertical: 4 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
+          {busy === 'restore' ? <ActivityIndicator size="small" color={palette.muted} /> : null}
+          <ThemedText variant="foot" tone="muted" style={{ textAlign: 'center' }}>
+            Restore purchase
+          </ThemedText>
+        </View>
+      </Pressable>
+
       <ThemedText variant="foot" tone="faint" style={{ textAlign: 'center' }}>
-        {/* TODO(step 7): wire react-native-iap / RevenueCat non-consumable purchase. */}
-        Restores across your devices. Stubbed purchase for now.
+        {/* TODO(iap): see lib/purchases.ts — wire react-native-iap / RevenueCat. */}
+        One-time purchase · stubbed for now
       </ThemedText>
     </ThemedView>
   );
