@@ -28,7 +28,9 @@ type PreviewKey = (typeof PREVIEW_OPTIONS)[number];
 export default function TonightScreen() {
   const { palette } = useTheme();
   const router = useRouter();
-  const [sel, setSel] = useState<PreviewKey>('GO');
+  // Production shows the real, computed night. The GO/MAYBE/SKIP mock-exact
+  // reference states stay available in dev via the switcher below.
+  const [sel, setSel] = useState<PreviewKey>('LIVE');
 
   // Active location: a selected saved location (unlocked) or the device's.
   const saved = useStore((s) => s.saved);
@@ -123,9 +125,11 @@ export default function TonightScreen() {
             {night.forecastNote}
           </ThemedText>
 
-          <View style={{ marginTop: 28 }}>
-            <DevStateSwitcher value={sel} options={PREVIEW_OPTIONS} onChange={setSel} />
-          </View>
+          {__DEV__ ? (
+            <View style={{ marginTop: 28 }}>
+              <DevStateSwitcher value={sel} options={PREVIEW_OPTIONS} onChange={setSel} />
+            </View>
+          ) : null}
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
