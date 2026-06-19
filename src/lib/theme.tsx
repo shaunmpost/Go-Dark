@@ -1,21 +1,14 @@
 /**
  * Go Dark design system.
  *
- * Two themes, swapped via a single animated `t` value (0 = Night, 1 = Field).
- * Tokens are transcribed directly from the mock; the Field (night-vision red)
- * palette is a full monochrome-red swap. All colored surfaces interpolate
- * between the two palettes over ~0.5s so the toggle feels like a dimmer, not
- * a hard cut.
+ * Two palettes (Night default, Field night-vision red), swapped instantly via
+ * React state when the moon toggle flips `fieldMode`. (An earlier version
+ * cross-faded every color on the UI thread with Reanimated worklets; that was
+ * the cause of a release-build crash, so colors now switch directly. A smooth
+ * transition can be reintroduced later with a safer, coarse-grained technique.)
  */
-import React, { createContext, useCallback, useContext, useMemo } from 'react';
-import { TextStyle } from 'react-native';
-import Animated, {
-  interpolateColor,
-  SharedValue,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { Text, TextProps, TextStyle, View, ViewProps } from 'react-native';
 
 export type ColorKey =
   | 'bg'
@@ -80,29 +73,19 @@ export const fieldPalette: Palette = {
 type ThemeContextValue = {
   fieldMode: boolean;
   toggleFieldMode: () => void;
-  /** 0 = night, 1 = field. Animated. */
-  t: SharedValue<number>;
-  /** Resolved palette for the current mode (non-animated reads). */
+  /** Resolved palette for the current mode. */
   palette: Palette;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const t = useSharedValue(0);
-  const [fieldMode, setFieldMode] = React.useState(false);
-
-  const toggleFieldMode = useCallback(() => {
-    setFieldMode((prev) => {
-      const next = !prev;
-      t.value = withTiming(next ? 1 : 0, { duration: 500 });
-      return next;
-    });
-  }, [t]);
+  const [fieldMode, setFieldMode] = useState(false);
+  const toggleFieldMode = useCallback(() => setFieldMode((prev) => !prev), []);
 
   const value = useMemo<ThemeContextValue>(
-    () => ({ fieldMode, toggleFieldMode, t, palette: fieldMode ? fieldPalette : nightPalette }),
-    [fieldMode, toggleFieldMode, t],
+    () => ({ fieldMode, toggleFieldMode, palette: fieldMode ? fieldPalette : nightPalette }),
+    [fieldMode, toggleFieldMode],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
@@ -114,24 +97,18 @@ export function useTheme(): ThemeContextValue {
   return ctx;
 }
 
-/** Animated style that interpolates a single color token between the themes. */
-function useTokenColor(key: ColorKey, prop: 'color' | 'backgroundColor' | 'borderColor') {
-  const { t } = useTheme();
-  return useAnimatedStyle(() => {
-    'worklet';
-    const c = interpolateColor(t.value, [0, 1], [nightPalette[key], fieldPalette[key]]);
-    return { [prop]: c } as Record<string, string>;
-  });
-}
-
+// Color helpers — return plain style objects for the current palette.
 export function useBgColor(key: ColorKey) {
-  return useTokenColor(key, 'backgroundColor');
+  const { palette } = useTheme();
+  return { backgroundColor: palette[key] };
 }
 export function useTextColor(key: ColorKey) {
-  return useTokenColor(key, 'color');
+  const { palette } = useTheme();
+  return { color: palette[key] };
 }
 export function useBorderColor(key: ColorKey) {
-  return useTokenColor(key, 'borderColor');
+  const { palette } = useTheme();
+  return { borderColor: palette[key] };
 }
 
 /** Resolve a token's literal value for the current mode (icons, gradients, etc.). */
@@ -169,29 +146,32 @@ export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 };
 
 // --- Themed primitives ------------------------------------------------------
 
-type ThemedTextProps = React.ComponentProps<typeof Animated.Text> & {
+type ThemedTextProps = TextProps & {
   tone?: ColorKey;
   variant?: keyof typeof type;
 };
 
 export function ThemedText({ tone = 'text', variant = 'body', style, ...rest }: ThemedTextProps) {
-  const colorStyle = useTextColor(tone);
-  return <Animated.Text {...rest} style={[type[variant], colorStyle, style]} />;
+  const { palette } = useTheme();
+  return <Text {...rest} style={[type[variant], { color: palette[tone] }, style]} />;
 }
 
-type ThemedViewProps = React.ComponentProps<typeof Animated.View> & {
+type ThemedViewProps = ViewProps & {
   tone?: ColorKey;
   border?: ColorKey | boolean;
 };
 
 export function ThemedView({ tone, border, style, ...rest }: ThemedViewProps) {
-  const bgStyle = useBgColor(tone ?? 'bg');
+  const { palette } = useTheme();
   const borderKey: ColorKey = border === true ? 'hairline' : (border as ColorKey) || 'hairline';
-  const borderStyle = useBorderColor(borderKey);
   return (
-    <Animated.View
+    <View
       {...rest}
-      style={[tone ? bgStyle : null, border ? [{ borderWidth: 1 }, borderStyle] : null, style]}
+      style={[
+        tone ? { backgroundColor: palette[tone] } : null,
+        border ? { borderWidth: 1, borderColor: palette[borderKey] } : null,
+        style,
+      ]}
     />
   );
 }

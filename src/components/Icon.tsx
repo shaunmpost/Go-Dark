@@ -1,17 +1,11 @@
 /**
  * Tiny cross-platform icon set drawn with react-native-svg so it renders
- * identically on iOS, Android, and web (no SF Symbols dependency). Stroke
- * color fades smoothly with the theme via reanimated animated props.
+ * identically on iOS, Android, and web (no SF Symbols dependency). Stroke color
+ * comes straight from the current palette (switches with the theme).
  */
 import React from 'react';
-import Animated, {
-  interpolateColor,
-  useAnimatedProps,
-} from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
-import { ColorKey, fieldPalette, nightPalette, useTheme } from '@/lib/theme';
-
-const AnimatedPath = Animated.createAnimatedComponent(Path);
+import { ColorKey, useTheme } from '@/lib/theme';
 
 const PATHS = {
   // Crescent moon (field-mode toggle)
@@ -53,21 +47,18 @@ export function Icon({
   fill?: boolean;
   opacity?: number;
 }) {
-  const { t } = useTheme();
-  const animatedProps = useAnimatedProps(() => {
-    'worklet';
-    const c = interpolateColor(t.value, [0, 1], [nightPalette[tone], fieldPalette[tone]]);
-    return { stroke: c, fill: fill ? c : 'none' };
-  });
+  const { palette } = useTheme();
+  const c = palette[tone];
 
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" opacity={opacity}>
-      <AnimatedPath
+      <Path
         d={PATHS[name]}
+        stroke={c}
+        fill={fill ? c : 'none'}
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
-        animatedProps={animatedProps}
       />
     </Svg>
   );

@@ -23,15 +23,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Defs, Line, Pattern, Rect } from 'react-native-svg';
-import {
-  fieldPalette,
-  nightPalette,
-  radii,
-  ThemedText,
-  ThemedView,
-  useColorValue,
-  useTheme,
-} from '@/lib/theme';
+import { radii, ThemedText, ThemedView, useColorValue, useTheme } from '@/lib/theme';
 import { NightData, TimeBand } from '@/lib/types';
 import { minutesToClock, RIBBON } from '@/lib/mock-data';
 
@@ -47,26 +39,17 @@ function clamp(v: number, lo: number, hi: number) {
   return Math.min(Math.max(v, lo), hi);
 }
 
-/** Crossfading sky gradient: 4-stop so the middle of the night sits flat-dark. */
+/** Sky gradient: 4-stop so the middle of the night sits flat-dark. */
 function SkyGradient() {
-  const { t } = useTheme();
-  const fieldStyle = useAnimatedStyle(() => ({ opacity: t.value }));
-  const stops = { locations: [0, 0.42, 0.58, 1] as const, start: { x: 0, y: 0 }, end: { x: 1, y: 0 } };
+  const { palette } = useTheme();
   return (
-    <View style={ABSOLUTE_FILL}>
-      <LinearGradient
-        colors={[nightPalette.ribbonEdge, nightPalette.ribbonCenter, nightPalette.ribbonCenter, nightPalette.ribbonEdge]}
-        {...stops}
-        style={ABSOLUTE_FILL}
-      />
-      <Animated.View style={[ABSOLUTE_FILL, fieldStyle]}>
-        <LinearGradient
-          colors={[fieldPalette.ribbonEdge, fieldPalette.ribbonCenter, fieldPalette.ribbonCenter, fieldPalette.ribbonEdge]}
-          {...stops}
-          style={ABSOLUTE_FILL}
-        />
-      </Animated.View>
-    </View>
+    <LinearGradient
+      colors={[palette.ribbonEdge, palette.ribbonCenter, palette.ribbonCenter, palette.ribbonEdge]}
+      locations={[0, 0.42, 0.58, 1]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={ABSOLUTE_FILL}
+    />
   );
 }
 
