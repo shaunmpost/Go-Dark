@@ -15,6 +15,12 @@ jobs:
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       EAS_BUILD_NO_EXPO_GO_WARNING: "true"
+      # Let EAS create the iOS signing cert + provisioning profile
+      # non-interactively using the App Store Connect API key.
+      EXPO_ASC_API_KEY_PATH: ${{ github.workspace }}/asc_api_key.p8
+      EXPO_ASC_KEY_ID: FZV4Q6XX56
+      EXPO_ASC_ISSUER_ID: 31707919-50e4-458c-bbbe-7d2b3c221944
+      EXPO_APPLE_TEAM_ID: CNTZQ8CG4W
     steps:
       - name: Checkout
         uses: actions/checkout@v4
