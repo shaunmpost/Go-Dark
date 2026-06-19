@@ -10,9 +10,11 @@
     "backgroundColor": "#06070e",
     "ios": {
       "icon": "./assets/expo.icon",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "app.godark.ios"
     },
     "android": {
+      "package": "app.godark",
       "adaptiveIcon": {
         "backgroundColor": "#06070e",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
