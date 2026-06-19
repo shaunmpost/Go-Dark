@@ -9,9 +9,11 @@
     "userInterfaceStyle": "dark",
     "backgroundColor": "#06070e",
     "ios": {
-      "icon": "./assets/expo.icon",
       "supportsTablet": true,
-      "bundleIdentifier": "app.godark.ios"
+      "bundleIdentifier": "app.godark.ios",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "app.godark",
