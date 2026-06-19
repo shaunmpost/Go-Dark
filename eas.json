@@ -1,0 +1,30 @@
+{
+  "cli": {
+    "version": ">= 5.9.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": { "simulator": false },
+      "android": { "buildType": "apk" }
+    },
+    "production": {
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascApiKeyPath": "./asc_api_key.p8",
+        "ascApiKeyId": "FZV4Q6XX56",
+        "ascApiKeyIssuerId": "31707919-50e4-458c-bbbe-7d2b3c221944",
+        "appleTeamId": "CNTZQ8CG4W"
+      }
+    }
+  }
+}
