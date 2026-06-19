@@ -1,0 +1,44 @@
+name: EAS iOS → TestFlight
+
+# Manual trigger (from the GitHub Actions tab, works on mobile).
+on:
+  workflow_dispatch:
+    inputs:
+      submit:
+        description: Submit to TestFlight after the build
+        type: boolean
+        default: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Write App Store Connect API key
+        run: |
+          printf '%s' "${{ secrets.ASC_KEY_P8 }}" > "$GITHUB_WORKSPACE/asc_api_key.p8"
+
+      - name: Build (and submit) iOS
+        run: |
+          if [ "${{ inputs.submit }}" = "true" ]; then
+            eas build --platform ios --profile production --non-interactive --auto-submit
+          else
+            eas build --platform ios --profile production --non-interactive
+          fi
