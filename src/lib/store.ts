@@ -16,6 +16,8 @@ type StoreState = {
   selectedId: string | null;
   /** One-time purchase unlocked? Gates saved locations + the planner. */
   isUnlocked: boolean;
+  /** Has the user seen the first-run onboarding? */
+  hasOnboarded: boolean;
   /** Hydration flag so the UI can wait for persisted state. */
   _hydrated: boolean;
 
@@ -23,6 +25,7 @@ type StoreState = {
   removeLocation: (id: string) => void;
   selectLocation: (id: string | null) => void;
   unlock: () => void;
+  completeOnboarding: () => void;
 };
 
 export const useStore = create<StoreState>()(
@@ -31,6 +34,7 @@ export const useStore = create<StoreState>()(
       saved: [],
       selectedId: null,
       isUnlocked: false,
+      hasOnboarded: false,
       _hydrated: false,
 
       addLocation: (g) =>
@@ -42,11 +46,17 @@ export const useStore = create<StoreState>()(
         })),
       selectLocation: (id) => set({ selectedId: id }),
       unlock: () => set({ isUnlocked: true }),
+      completeOnboarding: () => set({ hasOnboarded: true }),
     }),
     {
       name: 'go-dark-store',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (s) => ({ saved: s.saved, selectedId: s.selectedId, isUnlocked: s.isUnlocked }),
+      partialize: (s) => ({
+        saved: s.saved,
+        selectedId: s.selectedId,
+        isUnlocked: s.isUnlocked,
+        hasOnboarded: s.hasOnboarded,
+      }),
       onRehydrateStorage: () => (state) => {
         if (state) state._hydrated = true;
       },

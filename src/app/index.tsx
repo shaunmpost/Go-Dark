@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { DevStateSwitcher } from '@/components/DevStateSwitcher';
 import { NightRibbon } from '@/components/NightRibbon';
 import { NudgeCard } from '@/components/NudgeCard';
+import { Onboarding } from '@/components/Onboarding';
 import { Scorecard } from '@/components/Scorecard';
 import { TopBar } from '@/components/TopBar';
 import { Verdict } from '@/components/Verdict';
@@ -36,10 +37,13 @@ export default function TonightScreen() {
   const saved = useStore((s) => s.saved);
   const selectedId = useStore((s) => s.selectedId);
   const isUnlocked = useStore((s) => s.isUnlocked);
+  const hasOnboarded = useStore((s) => s.hasOnboarded);
+  const hydrated = useStore((s) => s._hydrated);
   const [device, setDevice] = useState<Geo | null>(null);
+  // Hold the location prompt until onboarding has primed it.
   useEffect(() => {
-    getDeviceLocation().then(setDevice).catch(() => {});
-  }, []);
+    if (hasOnboarded) getDeviceLocation().then(setDevice).catch(() => {});
+  }, [hasOnboarded]);
 
   const activeLocation: Geo = useMemo(() => {
     if (isUnlocked && selectedId) {
@@ -80,6 +84,10 @@ export default function TonightScreen() {
 
   const night: NightData =
     sel === 'LIVE' ? liveFull ?? liveBase ?? MOCK_NIGHTS.GO : MOCK_NIGHTS[sel];
+
+  // Wait for persisted state, then show onboarding once before the app.
+  if (!hydrated) return <ThemedView tone="bg" style={{ flex: 1 }} />;
+  if (!hasOnboarded) return <Onboarding />;
 
   return (
     <ThemedView tone="bg" style={{ flex: 1 }}>
