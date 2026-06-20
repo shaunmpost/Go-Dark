@@ -13,7 +13,6 @@
  */
 import React, { useState } from 'react';
 import { LayoutChangeEvent, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
@@ -22,8 +21,8 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Defs, Line, Pattern, Rect } from 'react-native-svg';
-import { radii, ThemedText, ThemedView, useColorValue, useTheme } from '@/lib/theme';
+import Svg, { Defs, Pattern, Rect } from 'react-native-svg';
+import { radii, ThemedText, ThemedView, useColorValue } from '@/lib/theme';
 import { NightData, TimeBand } from '@/lib/types';
 import { minutesToClock, RIBBON } from '@/lib/mock-data';
 
@@ -39,18 +38,10 @@ function clamp(v: number, lo: number, hi: number) {
   return Math.min(Math.max(v, lo), hi);
 }
 
-/** Sky gradient: 4-stop so the middle of the night sits flat-dark. */
-function SkyGradient() {
-  const { palette } = useTheme();
-  return (
-    <LinearGradient
-      colors={[palette.ribbonEdge, palette.ribbonCenter, palette.ribbonCenter, palette.ribbonEdge]}
-      locations={[0, 0.42, 0.58, 1]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={ABSOLUTE_FILL}
-    />
-  );
+/** `#rrggbb` → `rgba(...)` for the mint best-window box. */
+function tint(hex: string, a: number): string {
+  const h = hex.replace('#', '');
+  return `rgba(${parseInt(h.slice(0, 2), 16)}, ${parseInt(h.slice(2, 4), 16)}, ${parseInt(h.slice(4, 6), 16)}, ${a})`;
 }
 
 export function NightRibbon({ night }: { night: NightData }) {
@@ -61,8 +52,8 @@ export function NightRibbon({ night }: { night: NightData }) {
   const trackW = useSharedValue(0);
   const handleMin = useSharedValue(initialMin);
 
-  const moonHatch = useColorValue('moonBand');
-  const cloudColor = useColorValue('cloudBand');
+  const hatchA = useColorValue('ribbonEdge');
+  const hatchB = useColorValue('ribbonCenter');
 
   const onLayout = (e: LayoutChangeEvent) => {
     const width = e.nativeEvent.layout.width;
@@ -132,43 +123,25 @@ export function NightRibbon({ night }: { night: NightData }) {
           onLayout={onLayout}
           style={{ height: TRACK_H, borderRadius: radii.lg, overflow: 'hidden' }}
         >
-          <SkyGradient />
+          <ThemedView tone="ribbonCenter" style={ABSOLUTE_FILL} />
 
           {w > 0 && (
             <>
-              {/* Hatched moon bands + cloud bands via SVG */}
+              {/* Flat diagonal hatch across the whole track. */}
               <Svg width={w} height={TRACK_H} style={ABSOLUTE_FILL}>
                 <Defs>
                   <Pattern
-                    id="moonHatch"
+                    id="hatch"
                     patternUnits="userSpaceOnUse"
                     width={12}
                     height={12}
-                    patternTransform="rotate(45)"
+                    patternTransform="rotate(135)"
                   >
-                    <Rect x={0} y={0} width={6} height={12} fill={moonHatch} />
+                    <Rect x={0} y={0} width={6} height={12} fill={hatchA} />
+                    <Rect x={6} y={0} width={6} height={12} fill={hatchB} />
                   </Pattern>
                 </Defs>
-                {night.moonBands.map((b: TimeBand, i: number) => (
-                  <Rect
-                    key={`moon-${i}`}
-                    x={xOf(b.start)}
-                    y={0}
-                    width={xOf(b.end) - xOf(b.start)}
-                    height={TRACK_H}
-                    fill="url(#moonHatch)"
-                  />
-                ))}
-                {night.cloudBands.map((b: TimeBand, i: number) => (
-                  <Rect
-                    key={`cloud-${i}`}
-                    x={xOf(b.start)}
-                    y={0}
-                    width={xOf(b.end) - xOf(b.start)}
-                    height={TRACK_H}
-                    fill={cloudColor}
-                  />
-                ))}
+                <Rect x={0} y={0} width={w} height={TRACK_H} fill="url(#hatch)" opacity={0.55} />
               </Svg>
 
               {/* Best-window glow band */}
@@ -209,34 +182,34 @@ export function NightRibbon({ night }: { night: NightData }) {
   );
 }
 
-/** Glowing accent band marking the recommended shooting window. */
+/** The recommended shooting window — a rounded, glowing mint box. */
 function BestWindowBand({ left, width }: { left: number; width: number }) {
-  const accentDim = useColorValue('accentDim');
+  const accent = useColorValue('accent');
   return (
-    <View style={{ position: 'absolute', top: 0, bottom: 0, left, width }} pointerEvents="none">
-      <LinearGradient
-        colors={[accentDim, 'transparent']}
-        locations={[0, 0.8]}
-        style={ABSOLUTE_FILL}
-      />
-      <ThemedView tone="accent" style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 1 }} />
-      <ThemedView tone="accent" style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 1 }} />
-      <ThemedView tone="accent" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 2 }} />
-      {width >= 72 ? (
+    <View
+      style={{
+        position: 'absolute',
+        top: 8,
+        bottom: 8,
+        left,
+        width,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: tint(accent, 0.6),
+        backgroundColor: tint(accent, 0.15),
+        shadowColor: accent,
+        shadowOpacity: 0.35,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 0 },
+      }}
+      pointerEvents="none"
+    >
+      {width >= 64 ? (
         <ThemedText
           numberOfLines={1}
           variant="eyebrow"
           tone="accent"
-          style={{
-            position: 'absolute',
-            top: 9,
-            left: 2,
-            right: 2,
-            textAlign: 'center',
-            fontSize: 9.5,
-            letterSpacing: 1.2,
-            fontWeight: '700',
-          }}
+          style={{ position: 'absolute', top: 5, left: 7, fontSize: 9, letterSpacing: 1.2, fontWeight: '700' }}
         >
           Best window
         </ThemedText>
@@ -245,18 +218,11 @@ function BestWindowBand({ left, width }: { left: number; width: number }) {
   );
 }
 
-/** "core ↑" rise marker — a thin vertical line with a small bottom label. */
+/** Core-rise marker — a faint vertical line. */
 function CoreMarker({ left }: { left: number }) {
   return (
     <View style={{ position: 'absolute', top: 0, bottom: 0, left }} pointerEvents="none">
-      <ThemedView tone="text" style={{ width: 1, flex: 1, opacity: 0.5 }} />
-      <ThemedText
-        variant="tick"
-        tone="text"
-        style={{ position: 'absolute', bottom: 6, left: 4, fontSize: 9, opacity: 0.6, letterSpacing: 0.5 }}
-      >
-        core ↑
-      </ThemedText>
+      <ThemedView tone="text" style={{ width: 1, flex: 1, opacity: 0.35 }} />
     </View>
   );
 }
