@@ -14,7 +14,7 @@
 import * as Astronomy from 'astronomy-engine';
 import { GALACTIC_CORE } from '@/config/data-sources';
 import { formatDuration, minutesToClock, RIBBON } from './mock-data';
-import { Factor, Geo, NightData, RibbonSample, TimeBand, VerdictState } from './types';
+import { Factor, Geo, NightData, RibbonSample, SkySnapshot, TimeBand, VerdictState } from './types';
 import { computeConfidence, computeVerdict } from './verdict';
 import {
   astroAt,
@@ -46,7 +46,7 @@ function dirWord(dir: string): string {
   return map[dir] ?? 'sky';
 }
 
-type Row = { min: number; sun: number; moonAlt: number; coreAlt: number; coreAz: number };
+type Row = { min: number; sun: number; moonAlt: number; moonAz: number; coreAlt: number; coreAz: number };
 
 export type NightModel = { rows: Row[]; ribbonStart: Date };
 
@@ -135,7 +135,7 @@ export function buildRows(geo: Geo, now: Date): NightModel {
     const sun = altAz(Astronomy.Body.Sun, observer, d).alt;
     const moon = altAz(Astronomy.Body.Moon, observer, d);
     const core = altAz(CORE, observer, d);
-    rows.push({ min, sun, moonAlt: moon.alt, coreAlt: core.alt, coreAz: core.az });
+    rows.push({ min, sun, moonAlt: moon.alt, moonAz: moon.az, coreAlt: core.alt, coreAz: core.az });
   }
   return { rows, ribbonStart };
 }
@@ -239,6 +239,30 @@ export function assembleNight(
   const transScore = a ? indexToScore(a.transparency) : 0.7;
   const seeingScore = a ? indexToScore(a.seeing) : 0.6;
 
+  // Sky snapshot for the live-sky hero — a representative moment (the window
+  // midpoint, else the core's peak, else local midnight).
+  const snapMin = span ? Math.round((span.start + span.end) / 2) : peak.coreAlt > 0 ? peak.min : 360;
+  const snapRow = rows.reduce(
+    (best, r) => (Math.abs(r.min - snapMin) < Math.abs(best.min - snapMin) ? r : best),
+    rows[0],
+  );
+  const snapCloud = cloudOf(snapRow.min);
+  const darknessF = snapRow.sun <= -18 ? 1 : snapRow.sun <= -12 ? 0.5 : snapRow.sun <= -6 ? 0.2 : 0.05;
+  const moonWash = snapRow.moonAlt > 0 ? 0.55 * illum : 0;
+  const sky: SkySnapshot = {
+    atMinutes: snapRow.min,
+    sunAlt: snapRow.sun,
+    moonUp: snapRow.moonAlt > 0,
+    moonAlt: snapRow.moonAlt,
+    moonAz: snapRow.moonAz,
+    moonIllum: illum,
+    coreUp: snapRow.coreAlt > 0,
+    coreAlt: snapRow.coreAlt,
+    coreAz: snapRow.coreAz,
+    cloud: snapCloud,
+    starScore: Math.max(0, Math.min(1, darknessF * (1 - snapCloud) * transScore * (1 - moonWash))),
+  };
+
   const factors: Factor[] = [
     {
       key: 'darkness',
@@ -300,6 +324,7 @@ export function assembleNight(
     cloudBands,
     coreRiseMinutes,
     samples,
+    sky,
     bestNight: null,
     forecastNote: forecast
       ? `Cloud from ${forecast.sources.join(' · ')} · fetched on open, cached`

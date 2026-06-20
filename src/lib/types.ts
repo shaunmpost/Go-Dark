@@ -55,6 +55,25 @@ export type TimeBand = {
   end: number;
 };
 
+/** A representative snapshot of the sky, used to draw the live-sky hero. */
+export type SkySnapshot = {
+  /** Minutes since 18:00 the snapshot represents (e.g. the window midpoint). */
+  atMinutes: number;
+  sunAlt: number;
+  moonUp: boolean;
+  moonAlt: number;
+  moonAz: number;
+  /** Illuminated fraction 0..1. */
+  moonIllum: number;
+  coreUp: boolean;
+  coreAlt: number;
+  coreAz: number;
+  /** 0..1 cloud cover. */
+  cloud: number;
+  /** 0..1 how many stars are visible (darkness × clarity × moon). */
+  starScore: number;
+};
+
 export type NightData = {
   locationLabel: string;
   /** Human date label for the night, e.g. "Tonight". */
@@ -82,6 +101,9 @@ export type NightData = {
     title: string; // "Thursday is your best night this month"
     body: string; // "New moon, clear skies forecast, and the core stays up..."
   } | null;
+
+  /** A representative snapshot of the night sky, for the live-sky hero. */
+  sky: SkySnapshot;
 
   /** Footer note about forecast confidence. */
   forecastNote: string;

@@ -7,12 +7,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DevStateSwitcher } from '@/components/DevStateSwitcher';
 import { NightRibbon } from '@/components/NightRibbon';
 import { NudgeCard } from '@/components/NudgeCard';
 import { Onboarding } from '@/components/Onboarding';
 import { Scorecard } from '@/components/Scorecard';
+import { SkyScene } from '@/components/SkyScene';
 import { TopBar } from '@/components/TopBar';
 import { Verdict } from '@/components/Verdict';
 import { liveNight, liveNightWithWeather } from '@/lib/night';
@@ -28,6 +29,7 @@ type PreviewKey = (typeof PREVIEW_OPTIONS)[number];
 export default function TonightScreen() {
   const { palette } = useTheme();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   // Production shows the real, computed night. The GO/MAYBE/SKIP mock-exact
   // reference states stay available in dev via the switcher below.
   const [sel, setSel] = useState<PreviewKey>('LIVE');
@@ -75,33 +77,38 @@ export default function TonightScreen() {
 
   return (
     <ThemedView tone="bg" style={{ flex: 1 }}>
-      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
-        <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 8, paddingBottom: 56 }}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            sel === 'LIVE' ? (
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={refreshLive}
-                tintColor={palette.muted}
-                colors={[palette.accent]}
-                progressBackgroundColor={palette.bg}
-              />
-            ) : undefined
-          }
-        >
-          <View style={{ marginTop: 18, marginBottom: 30 }}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 56 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          sel === 'LIVE' ? (
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={refreshLive}
+              tintColor={palette.muted}
+              colors={[palette.accent]}
+              progressBackgroundColor={palette.bg}
+            />
+          ) : undefined
+        }
+      >
+        {/* Live-sky hero — the sky for tonight, behind the verdict. */}
+        <View style={{ position: 'relative', overflow: 'hidden' }}>
+          <SkyScene snapshot={night.sky} />
+          <View style={{ paddingTop: insets.top + 10, paddingHorizontal: 24, paddingBottom: 30 }}>
             <TopBar
               dateLabel={night.dateLabel}
               location={night.locationLabel}
               onPressLocation={() => router.push('/locations')}
             />
+            <View style={{ marginTop: 14 }}>
+              <Verdict night={night} />
+            </View>
           </View>
+        </View>
 
-          <Verdict night={night} />
-
-          <View style={{ marginTop: 36 }}>
+        <View style={{ paddingHorizontal: 24 }}>
+          <View style={{ marginTop: 28 }}>
             <NightRibbon key={sel} night={night} />
           </View>
 
@@ -122,8 +129,8 @@ export default function TonightScreen() {
               <DevStateSwitcher value={sel} options={PREVIEW_OPTIONS} onChange={setSel} />
             </View>
           ) : null}
-        </ScrollView>
-      </SafeAreaView>
+        </View>
+      </ScrollView>
     </ThemedView>
   );
 }
