@@ -15,6 +15,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Icon } from './Icon';
+import { Starfield } from './Starfield';
 import {
   ColorKey,
   radii,
@@ -48,13 +49,27 @@ function PulsingDot({ tone }: { tone: ColorKey }) {
   }));
   const haloColor = useBgColor(tone);
   const coreColor = useBgColor(tone);
+  const { palette } = useTheme();
 
   return (
-    <View style={{ width: 14, height: 14, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: 12, height: 12, alignItems: 'center', justifyContent: 'center' }}>
       <Animated.View
-        style={[{ position: 'absolute', width: 14, height: 14, borderRadius: 7 }, haloColor, halo]}
+        style={[{ position: 'absolute', width: 12, height: 12, borderRadius: 6 }, haloColor, halo]}
       />
-      <Animated.View style={[{ width: 14, height: 14, borderRadius: 7 }, coreColor]} />
+      <Animated.View
+        style={[
+          {
+            width: 12,
+            height: 12,
+            borderRadius: 6,
+            shadowColor: palette[tone],
+            shadowOpacity: 0.9,
+            shadowRadius: 6,
+            shadowOffset: { width: 0, height: 0 },
+          },
+          coreColor,
+        ]}
+      />
     </View>
   );
 }
@@ -76,13 +91,13 @@ function ConfidenceChip({ confidence, tone }: { confidence: NightData['confidenc
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
-        paddingHorizontal: 16,
-        paddingVertical: 9,
+        gap: 7,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
         borderRadius: radii.pill,
         borderWidth: 1,
-        borderColor: tint(c, 0.45),
-        backgroundColor: tint(c, 0.12),
+        borderColor: tint(c, 0.3),
+        backgroundColor: tint(c, 0.1),
       }}
     >
       <Icon name={confidence === 'High' ? 'check' : 'info'} size={14} tone={tone} strokeWidth={2.4} />
@@ -97,52 +112,63 @@ export function Verdict({ night }: { night: NightData }) {
   const tone = STATE_TONE[night.state];
 
   return (
-    <View style={{ alignItems: 'center', paddingTop: 30, paddingBottom: 30 }}>
-      <ThemedText variant="eyebrow" tone="muted" style={{ marginBottom: 22 }}>
-        Verdict · {night.dateLabel}
-      </ThemedText>
-
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-        <PulsingDot tone={tone} />
-        <ThemedText variant="hero" tone="text">
-          {STATE_COPY[night.state].word}
+    <View style={{ paddingTop: 30, paddingBottom: 24 }}>
+      <Starfield />
+      <View style={{ alignItems: 'center' }}>
+        <ThemedText variant="eyebrow" tone="muted" style={{ marginBottom: 12 }}>
+          Verdict · {night.dateLabel}
         </ThemedText>
-      </View>
 
-      <View style={{ marginTop: 18 }}>
-        <ConfidenceChip confidence={night.confidence} tone={tone} />
-      </View>
-
-      <ThemedText
-        variant="sentence"
-        tone="text"
-        style={{ marginTop: 24, maxWidth: 280, textAlign: 'center', opacity: 0.92 }}
-      >
-        {night.headline}
-      </ThemedText>
-
-      {night.window ? (
-        <>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 22 }}>
-            <ThemedText variant="windowTime" tone="text">
-              {minutesToClock(night.window.start)}
-            </ThemedText>
-            <ThemedText variant="windowTime" tone="faint">
-              →
-            </ThemedText>
-            <ThemedText variant="windowTime" tone="text">
-              {minutesToClock(night.window.end)}
-            </ThemedText>
-          </View>
-          <ThemedText variant="windowSub" tone="faint" style={{ marginTop: 6 }}>
-            {formatDuration(night.window.end - night.window.start)} shooting window
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <PulsingDot tone={tone} />
+          <ThemedText variant="hero" tone={tone}>
+            {STATE_COPY[night.state].word}
           </ThemedText>
-        </>
-      ) : (
-        <ThemedText variant="windowSub" tone="faint" style={{ marginTop: 22 }}>
-          No usable window tonight
+        </View>
+
+        <View style={{ marginTop: 24 }}>
+          <ConfidenceChip confidence={night.confidence} tone={tone} />
+        </View>
+
+        <ThemedText
+          variant="sentence"
+          tone="text"
+          style={{ marginTop: 32, maxWidth: 290, textAlign: 'center', opacity: 0.9 }}
+        >
+          {night.headline}
         </ThemedText>
-      )}
+
+        {night.window ? (
+          <>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20, marginTop: 32 }}>
+              <View style={{ alignItems: 'flex-end' }}>
+                <ThemedText variant="eyebrow" tone="muted" style={{ letterSpacing: 2.4, marginBottom: 2 }}>
+                  Start
+                </ThemedText>
+                <ThemedText variant="windowTime" tone="text">
+                  {minutesToClock(night.window.start)}
+                </ThemedText>
+              </View>
+              <Icon name="next" size={18} tone={tone} strokeWidth={2.2} />
+              <View style={{ alignItems: 'flex-start' }}>
+                <ThemedText variant="eyebrow" tone="muted" style={{ letterSpacing: 2.4, marginBottom: 2 }}>
+                  End
+                </ThemedText>
+                <ThemedText variant="windowTime" tone="text">
+                  {minutesToClock(night.window.end)}
+                </ThemedText>
+              </View>
+            </View>
+            <ThemedText variant="windowSub" tone="muted" style={{ marginTop: 8 }}>
+              {formatDuration(night.window.end - night.window.start)} shooting window
+            </ThemedText>
+          </>
+        ) : (
+          <ThemedText variant="windowSub" tone="faint" style={{ marginTop: 28 }}>
+            No usable window tonight
+          </ThemedText>
+        )}
+      </View>
     </View>
   );
 }

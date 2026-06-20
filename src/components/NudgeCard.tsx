@@ -25,11 +25,12 @@ export function NudgeCard({ night }: { night: NightData }) {
     // Locked teaser — shows that a better night exists, gates the payoff.
     return (
       <Pressable onPress={() => router.push('/unlock')} accessibilityRole="button">
-        <ThemedView tone="panel" border="hairline" style={{ borderRadius: radii.lg, padding: 18, gap: 14 }}>
+        <ThemedView tone="panel" border="hairline" style={{ borderRadius: radii.md, padding: 18, gap: 14 }}>
           <View style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
             <ThemedView
               tone="accentDim"
-              style={{ width: 38, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center' }}
+              border="accent"
+              style={{ width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}
             >
               <Icon name="lock" size={18} tone="accent" />
             </ThemedView>
@@ -58,7 +59,7 @@ export function NudgeCard({ night }: { night: NightData }) {
   // Unlocked — the full nudge, tappable through to the planner.
   return (
     <Pressable onPress={() => router.push('/planner')} accessibilityRole="button">
-      <ThemedView tone="panel" border="hairline" style={{ borderRadius: radii.lg, padding: 18, gap: 14 }}>
+      <ThemedView tone="panel" border="hairline" style={{ borderRadius: radii.md, padding: 18, gap: 14 }}>
         <View style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
           <ThemedView
             tone="accentDim"

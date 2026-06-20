@@ -23,29 +23,29 @@ function toneForScore(score: number): ColorKey {
 
 function FactorRow({ factor, last }: { factor: Factor; last: boolean }) {
   const { palette } = useTheme();
-  const pct = Math.max(6, Math.round(factor.score * 100));
+  const pct = Math.max(5, Math.round(factor.score * 100));
   return (
     <View
       style={{
-        paddingVertical: 18,
-        gap: 14,
+        paddingVertical: 10,
+        gap: 8,
         borderBottomWidth: last ? 0 : 1,
         borderBottomColor: palette.hairline,
       }}
     >
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
-        <ThemedText variant="nudgeTitle" tone="text" style={{ fontSize: 16.5 }}>
+        <ThemedText variant="fname" tone="text" style={{ fontSize: 14.5 }}>
           {factor.label}
         </ThemedText>
-        <ThemedText variant="fval" tone="muted" style={{ fontSize: 14, flexShrink: 1, textAlign: 'right' }}>
+        <ThemedText variant="fval" tone="muted" style={{ fontSize: 12.5, flexShrink: 1, textAlign: 'right' }}>
           {factor.value}
         </ThemedText>
       </View>
       <View
         style={{
-          height: 8,
+          height: 6,
           borderRadius: radii.pill,
-          backgroundColor: palette.panel,
+          backgroundColor: 'rgba(0,0,0,0.28)',
           borderWidth: 1,
           borderColor: palette.hairline,
         }}
@@ -109,11 +109,11 @@ export function Scorecard({ factors }: { factors: Factor[] }) {
       >
         <ThemedView
           tone="panel"
-          border="hairlineStrong"
+          border="hairline"
           style={{
-            borderRadius: radii.pill,
-            paddingVertical: 18,
-            paddingHorizontal: 22,
+            borderRadius: radii.md,
+            paddingVertical: 16,
+            paddingHorizontal: 16,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
