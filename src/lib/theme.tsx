@@ -120,7 +120,15 @@ export function useColorValue(key: ColorKey): string {
 // --- Typography -------------------------------------------------------------
 
 export const type = {
-  hero: { fontSize: 74, fontWeight: '700', letterSpacing: -2, lineHeight: 84 } as TextStyle,
+  hero: {
+    fontSize: 74,
+    fontWeight: '700',
+    letterSpacing: -2,
+    lineHeight: 84,
+    textShadowColor: 'rgba(0,0,0,0.45)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 14,
+  } as TextStyle,
   eyebrow: { fontSize: 12, fontWeight: '600', letterSpacing: 2.4, textTransform: 'uppercase' } as TextStyle,
   conf: { fontSize: 12.5, fontWeight: '600', letterSpacing: 0.3 } as TextStyle,
   sentence: { fontSize: 17, fontWeight: '400', lineHeight: 25.5 } as TextStyle,

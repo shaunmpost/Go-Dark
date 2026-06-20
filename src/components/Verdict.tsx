@@ -109,8 +109,6 @@ export function Verdict({ night }: { night: NightData }) {
 
   return (
     <View style={{ alignItems: 'center', paddingTop: 14, paddingBottom: 30 }}>
-      <HeroGlow tone={tone} />
-
       <ThemedText variant="eyebrow" tone="muted" style={{ marginBottom: 22 }}>
         Verdict · {night.dateLabel}
       </ThemedText>
