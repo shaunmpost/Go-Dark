@@ -11,9 +11,8 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { Glass } from './Glass';
 import { Icon } from './Icon';
-import { ColorKey, radii, ThemedText, ThemedView } from '@/lib/theme';
+import { ColorKey, radii, ThemedText, ThemedView, useTheme } from '@/lib/theme';
 import { Factor } from '@/lib/types';
 
 function toneForScore(score: number): ColorKey {
@@ -23,38 +22,53 @@ function toneForScore(score: number): ColorKey {
 }
 
 function FactorRow({ factor, last }: { factor: Factor; last: boolean }) {
+  const { palette } = useTheme();
+  const pct = Math.max(6, Math.round(factor.score * 100));
   return (
-    <ThemedView
-      border={last ? undefined : 'hairline'}
+    <View
       style={{
-        paddingVertical: 15,
-        paddingHorizontal: 4,
-        gap: 9,
-        borderWidth: 0,
+        paddingVertical: 18,
+        gap: 14,
         borderBottomWidth: last ? 0 : 1,
+        borderBottomColor: palette.hairline,
       }}
     >
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <ThemedText variant="fname" tone="text">
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
+        <ThemedText variant="nudgeTitle" tone="text" style={{ fontSize: 16.5 }}>
           {factor.label}
         </ThemedText>
-        <ThemedText variant="fval" tone="muted">
+        <ThemedText variant="fval" tone="muted" style={{ fontSize: 14, flexShrink: 1, textAlign: 'right' }}>
           {factor.value}
         </ThemedText>
       </View>
-      <ThemedView tone="hairlineStrong" style={{ height: 4, borderRadius: 4, overflow: 'hidden' }}>
-        <ThemedView
-          tone={toneForScore(factor.score)}
-          style={{ height: 4, borderRadius: 4, width: `${Math.round(factor.score * 100)}%` }}
+      <View
+        style={{
+          height: 8,
+          borderRadius: radii.pill,
+          backgroundColor: palette.panel,
+          borderWidth: 1,
+          borderColor: palette.hairline,
+        }}
+      >
+        <View
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: `${pct}%`,
+            borderRadius: radii.pill,
+            backgroundColor: palette[toneForScore(factor.score)],
+          }}
         />
-      </ThemedView>
-    </ThemedView>
+      </View>
+    </View>
   );
 }
 
 function FactorList({ factors }: { factors: Factor[] }) {
   return (
-    <View style={{ paddingHorizontal: 4, paddingTop: 8 }}>
+    <View style={{ paddingTop: 6 }}>
       {factors.map((f, i) => (
         <FactorRow key={f.key} factor={f} last={i === factors.length - 1} />
       ))}
@@ -93,15 +107,16 @@ export function Scorecard({ factors }: { factors: Factor[] }) {
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
       >
-        <Glass
+        <ThemedView
+          tone="panel"
+          border="hairlineStrong"
           style={{
-            borderRadius: radii.md,
-            paddingVertical: 17,
-            paddingHorizontal: 20,
+            borderRadius: radii.pill,
+            paddingVertical: 18,
+            paddingHorizontal: 22,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            overflow: 'hidden',
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 11 }}>
@@ -113,7 +128,7 @@ export function Scorecard({ factors }: { factors: Factor[] }) {
           <Animated.View style={chevronStyle}>
             <Icon name="chevron" size={18} tone="muted" />
           </Animated.View>
-        </Glass>
+        </ThemedView>
       </Pressable>
 
       {/* Animated viewport */}

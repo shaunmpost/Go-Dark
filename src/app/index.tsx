@@ -6,6 +6,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DevStateSwitcher } from '@/components/DevStateSwitcher';
@@ -13,7 +14,6 @@ import { NightRibbon } from '@/components/NightRibbon';
 import { NudgeCard } from '@/components/NudgeCard';
 import { Onboarding } from '@/components/Onboarding';
 import { Scorecard } from '@/components/Scorecard';
-import { SkyScene } from '@/components/SkyScene';
 import { TopBar } from '@/components/TopBar';
 import { Verdict } from '@/components/Verdict';
 import { liveNight, liveNightWithWeather } from '@/lib/night';
@@ -92,18 +92,24 @@ export default function TonightScreen() {
           ) : undefined
         }
       >
-        {/* Live-sky hero — the sky for tonight, behind the verdict. */}
-        <View style={{ position: 'relative', overflow: 'hidden' }}>
-          <SkyScene snapshot={night.sky} />
-          <View style={{ paddingTop: insets.top + 10, paddingHorizontal: 24, paddingBottom: 30 }}>
+        {/* Hero — a clean dark sky with the verdict front and center. */}
+        <View style={{ position: 'relative' }}>
+          <LinearGradient
+            colors={[palette.panel, 'transparent']}
+            locations={[0, 1]}
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 280 }}
+            pointerEvents="none"
+          />
+          <View style={{ paddingTop: insets.top + 12, paddingHorizontal: 24 }}>
             <TopBar
               dateLabel={night.dateLabel}
               location={night.locationLabel}
               onPressLocation={() => router.push('/locations')}
             />
-            <View style={{ marginTop: 14 }}>
-              <Verdict night={night} />
-            </View>
+          </View>
+          <ThemedView tone="hairline" style={{ height: 1, marginTop: 18 }} />
+          <View style={{ paddingHorizontal: 24 }}>
+            <Verdict night={night} />
           </View>
         </View>
 

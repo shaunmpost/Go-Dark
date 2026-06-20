@@ -14,15 +14,13 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-import { Glass } from './Glass';
 import { Icon } from './Icon';
 import {
   ColorKey,
   radii,
   ThemedText,
-  ThemedView,
   useBgColor,
-  useColorValue,
+  useTheme,
 } from '@/lib/theme';
 import { NightData, VerdictState } from '@/lib/types';
 import { formatDuration, minutesToClock } from '@/lib/mock-data';
@@ -61,24 +59,37 @@ function PulsingDot({ tone }: { tone: ColorKey }) {
   );
 }
 
+/** `#rrggbb` → `rgba(...)` for tone-tinted pill fills. */
+function tint(hex: string, a: number): string {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
 function ConfidenceChip({ confidence, tone }: { confidence: NightData['confidence']; tone: ColorKey }) {
+  const { palette } = useTheme();
+  const c = palette[tone];
   return (
-    <Glass
+    <View
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 7,
-        paddingHorizontal: 13,
-        paddingVertical: 7,
+        gap: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 9,
         borderRadius: radii.pill,
-        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: tint(c, 0.45),
+        backgroundColor: tint(c, 0.12),
       }}
     >
-      <Icon name={confidence === 'High' ? 'check' : 'info'} size={13} tone={tone} strokeWidth={2.4} />
+      <Icon name={confidence === 'High' ? 'check' : 'info'} size={14} tone={tone} strokeWidth={2.4} />
       <ThemedText variant="conf" tone={tone}>
         {confidence} confidence
       </ThemedText>
-    </Glass>
+    </View>
   );
 }
 
@@ -86,7 +97,7 @@ export function Verdict({ night }: { night: NightData }) {
   const tone = STATE_TONE[night.state];
 
   return (
-    <View style={{ alignItems: 'center', paddingTop: 14, paddingBottom: 30 }}>
+    <View style={{ alignItems: 'center', paddingTop: 30, paddingBottom: 30 }}>
       <ThemedText variant="eyebrow" tone="muted" style={{ marginBottom: 22 }}>
         Verdict · {night.dateLabel}
       </ThemedText>
