@@ -12,7 +12,7 @@ import { Icon } from '@/components/Icon';
 import { planNights } from '@/lib/best-night';
 import { minutesToClock } from '@/lib/mock-data';
 import { useActiveLocation } from '@/lib/use-active-location';
-import { ColorKey, radii, ThemedText, ThemedView } from '@/lib/theme';
+import { ColorKey, fontFamily, radii, ThemedText, ThemedView } from '@/lib/theme';
 import { VerdictState } from '@/lib/types';
 import { weightedScore } from '@/lib/verdict';
 import { getForecast, WeatherForecast } from '@/lib/weather';
@@ -58,7 +58,7 @@ export default function PlannerScreen() {
               <ThemedText
                 variant="locName"
                 tone="text"
-                style={{ fontSize: 28, fontWeight: '700', letterSpacing: -0.6, marginTop: 3 }}
+                style={{ fontFamily: fontFamily.bold, fontSize: 28, fontWeight: '700', letterSpacing: -0.6, marginTop: 3 }}
               >
                 14-night planner
               </ThemedText>

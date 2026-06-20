@@ -19,7 +19,7 @@ import {
   searchPlaces,
 } from '@/lib/location';
 import { useStore } from '@/lib/store';
-import { radii, ThemedText, ThemedView, useTheme } from '@/lib/theme';
+import { fontFamily, radii, ThemedText, ThemedView, useTheme } from '@/lib/theme';
 import { Geo } from '@/lib/types';
 
 function coords(g: Geo) {
@@ -180,7 +180,7 @@ export default function LocationsScreen() {
               <ThemedText
                 variant="locName"
                 tone="text"
-                style={{ fontSize: 28, fontWeight: '700', letterSpacing: -0.6, marginTop: 3 }}
+                style={{ fontFamily: fontFamily.bold, fontSize: 28, fontWeight: '700', letterSpacing: -0.6, marginTop: 3 }}
               >
                 Locations
               </ThemedText>

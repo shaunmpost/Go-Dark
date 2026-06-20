@@ -119,32 +119,45 @@ export function useColorValue(key: ColorKey): string {
 
 // --- Typography -------------------------------------------------------------
 
+// Font families (loaded in app/_layout.tsx). Space Grotesk is the display face
+// for the verdict word and the times; Inter is the body face everywhere else.
+export const fontFamily = {
+  displayMedium: 'SpaceGrotesk_500Medium',
+  displaySemibold: 'SpaceGrotesk_600SemiBold',
+  displayBold: 'SpaceGrotesk_700Bold',
+  regular: 'Inter_400Regular',
+  medium: 'Inter_500Medium',
+  semibold: 'Inter_600SemiBold',
+  bold: 'Inter_700Bold',
+};
+
 export const type = {
   hero: {
+    fontFamily: fontFamily.displayMedium,
     fontSize: 80,
     fontWeight: '500',
     letterSpacing: 4,
     lineHeight: 82,
     textTransform: 'uppercase',
   } as TextStyle,
-  eyebrow: { fontSize: 10.5, fontWeight: '600', letterSpacing: 3.2, textTransform: 'uppercase' } as TextStyle,
-  conf: { fontSize: 12.5, fontWeight: '600', letterSpacing: 0.2 } as TextStyle,
-  sentence: { fontSize: 16, fontWeight: '400', lineHeight: 26 } as TextStyle,
-  windowTime: { fontSize: 24, fontWeight: '600', letterSpacing: 0.2, fontVariant: ['tabular-nums'] } as TextStyle,
-  sectionH: { fontSize: 13, fontWeight: '600', letterSpacing: 1.4, textTransform: 'uppercase' } as TextStyle,
-  readout: { fontSize: 12.5, fontWeight: '500', letterSpacing: 0.2, fontVariant: ['tabular-nums'] } as TextStyle,
-  tick: { fontSize: 10.5, fontWeight: '500', letterSpacing: 0.4, fontVariant: ['tabular-nums'] } as TextStyle,
-  toggle: { fontSize: 15, fontWeight: '600', letterSpacing: -0.1 } as TextStyle,
-  fname: { fontSize: 14.5, fontWeight: '500', letterSpacing: -0.1 } as TextStyle,
-  fval: { fontSize: 12.5, fontWeight: '500', letterSpacing: 0.1 } as TextStyle,
-  locLabel: { fontSize: 11, fontWeight: '600', letterSpacing: 1.6, textTransform: 'uppercase' } as TextStyle,
-  locName: { fontSize: 16, fontWeight: '600', letterSpacing: -0.2 } as TextStyle,
-  nudgeTitle: { fontSize: 14.5, fontWeight: '600', letterSpacing: -0.1 } as TextStyle,
-  nudgeBody: { fontSize: 13, fontWeight: '400', lineHeight: 18.9 } as TextStyle,
-  foot: { fontSize: 11, fontWeight: '500', letterSpacing: 0.4 } as TextStyle,
+  eyebrow: { fontFamily: fontFamily.semibold, fontSize: 10.5, fontWeight: '600', letterSpacing: 3.2, textTransform: 'uppercase' } as TextStyle,
+  conf: { fontFamily: fontFamily.semibold, fontSize: 12.5, fontWeight: '600', letterSpacing: 0.2 } as TextStyle,
+  sentence: { fontFamily: fontFamily.regular, fontSize: 16, fontWeight: '400', lineHeight: 26 } as TextStyle,
+  windowTime: { fontFamily: fontFamily.displaySemibold, fontSize: 24, fontWeight: '600', letterSpacing: 0.2, fontVariant: ['tabular-nums'] } as TextStyle,
+  sectionH: { fontFamily: fontFamily.semibold, fontSize: 13, fontWeight: '600', letterSpacing: 1.4, textTransform: 'uppercase' } as TextStyle,
+  readout: { fontFamily: fontFamily.medium, fontSize: 12.5, fontWeight: '500', letterSpacing: 0.2, fontVariant: ['tabular-nums'] } as TextStyle,
+  tick: { fontFamily: fontFamily.medium, fontSize: 10.5, fontWeight: '500', letterSpacing: 0.4, fontVariant: ['tabular-nums'] } as TextStyle,
+  toggle: { fontFamily: fontFamily.semibold, fontSize: 15, fontWeight: '600', letterSpacing: -0.1 } as TextStyle,
+  fname: { fontFamily: fontFamily.medium, fontSize: 14.5, fontWeight: '500', letterSpacing: -0.1 } as TextStyle,
+  fval: { fontFamily: fontFamily.medium, fontSize: 12.5, fontWeight: '500', letterSpacing: 0.1 } as TextStyle,
+  locLabel: { fontFamily: fontFamily.semibold, fontSize: 11, fontWeight: '600', letterSpacing: 1.6, textTransform: 'uppercase' } as TextStyle,
+  locName: { fontFamily: fontFamily.semibold, fontSize: 16, fontWeight: '600', letterSpacing: -0.2 } as TextStyle,
+  nudgeTitle: { fontFamily: fontFamily.semibold, fontSize: 14.5, fontWeight: '600', letterSpacing: -0.1 } as TextStyle,
+  nudgeBody: { fontFamily: fontFamily.regular, fontSize: 13, fontWeight: '400', lineHeight: 18.9 } as TextStyle,
+  foot: { fontFamily: fontFamily.medium, fontSize: 11, fontWeight: '500', letterSpacing: 0.4 } as TextStyle,
   // generic helpers
-  body: { fontSize: 15, fontWeight: '400', lineHeight: 22, letterSpacing: -0.1 } as TextStyle,
-  windowSub: { fontSize: 12, fontWeight: '500', letterSpacing: 0.4 } as TextStyle,
+  body: { fontFamily: fontFamily.regular, fontSize: 15, fontWeight: '400', lineHeight: 22, letterSpacing: -0.1 } as TextStyle,
+  windowSub: { fontFamily: fontFamily.medium, fontSize: 12, fontWeight: '500', letterSpacing: 0.4 } as TextStyle,
 };
 
 export const radii = { sm: 10, md: 16, lg: 18, pill: 999 };
