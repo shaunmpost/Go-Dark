@@ -38,3 +38,36 @@ export async function getDeviceLocation(): Promise<Geo | null> {
     return null;
   }
 }
+
+/**
+ * Forward-geocode a typed place name (e.g. "Joshua Tree") to a saveable
+ * location. The timezone is estimated from longitude (good to ~1h — enough to
+ * pick the right night; a proper tz lookup can refine it later).
+ */
+export async function geocodePlace(query: string): Promise<Geo | null> {
+  const q = query.trim();
+  if (!q) return null;
+  try {
+    const results = await Location.geocodeAsync(q);
+    if (!results.length) return null;
+    const { latitude, longitude } = results[0];
+
+    let label = q;
+    try {
+      const [place] = await Location.reverseGeocodeAsync({ latitude, longitude });
+      if (place) label = place.city || place.subregion || place.region || place.name || q;
+    } catch {
+      // keep the typed query as the label
+    }
+
+    return {
+      latitude,
+      longitude,
+      elevationM: 0,
+      label,
+      utcOffsetHours: Math.round(longitude / 15),
+    };
+  } catch {
+    return null;
+  }
+}

@@ -27,7 +27,7 @@ import { radii, ThemedText, ThemedView, useColorValue, useTheme } from '@/lib/th
 import { NightData, TimeBand } from '@/lib/types';
 import { minutesToClock, RIBBON } from '@/lib/mock-data';
 
-const TRACK_H = 96;
+const TRACK_H = 112;
 const TOTAL = RIBBON.totalMinutes;
 
 const HOUR_TICKS = ['6 PM', '9 PM', '12 AM', '3 AM', '6 AM'];
@@ -222,13 +222,25 @@ function BestWindowBand({ left, width }: { left: number; width: number }) {
       <ThemedView tone="accent" style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 1 }} />
       <ThemedView tone="accent" style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 1 }} />
       <ThemedView tone="accent" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 2 }} />
-      <ThemedText
-        variant="eyebrow"
-        tone="accent"
-        style={{ position: 'absolute', top: 8, alignSelf: 'center', fontSize: 9.5, letterSpacing: 1.4, fontWeight: '700' }}
-      >
-        Best window
-      </ThemedText>
+      {width >= 72 ? (
+        <ThemedText
+          numberOfLines={1}
+          variant="eyebrow"
+          tone="accent"
+          style={{
+            position: 'absolute',
+            top: 9,
+            left: 2,
+            right: 2,
+            textAlign: 'center',
+            fontSize: 9.5,
+            letterSpacing: 1.2,
+            fontWeight: '700',
+          }}
+        >
+          Best window
+        </ThemedText>
+      ) : null}
     </View>
   );
 }

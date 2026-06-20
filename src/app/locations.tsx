@@ -4,13 +4,13 @@
  * part of the one-time unlock; locked users see the gate.
  */
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
+import { Paywall } from '@/components/Paywall';
 import { DEFAULT_LOCATION } from '@/config/data-sources';
-import { getDeviceLocation } from '@/lib/location';
-import { purchaseUnlock, restorePurchases, UNLOCK_PRICE } from '@/lib/purchases';
+import { geocodePlace, getDeviceLocation } from '@/lib/location';
 import { useStore } from '@/lib/store';
 import { radii, ThemedText, ThemedView, useTheme } from '@/lib/theme';
 import { Geo } from '@/lib/types';
@@ -79,12 +79,31 @@ export default function LocationsScreen() {
   const addLocation = useStore((s) => s.addLocation);
   const removeLocation = useStore((s) => s.removeLocation);
   const selectLocation = useStore((s) => s.selectLocation);
-  const unlock = useStore((s) => s.unlock);
+  const { palette } = useTheme();
 
   const [device, setDevice] = useState<Geo | null>(null);
   useEffect(() => {
     getDeviceLocation().then(setDevice).catch(() => {});
   }, []);
+
+  // Search-and-add any place by name (not just where you are).
+  const [query, setQuery] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
+  const onAddPlace = async () => {
+    if (searching || !query.trim()) return;
+    setSearching(true);
+    setSearchError(null);
+    const place = await geocodePlace(query);
+    setSearching(false);
+    if (place) {
+      addLocation(place);
+      setQuery('');
+    } else {
+      setSearchError("Couldn't find that place — try a city or landmark name.");
+    }
+  };
 
   const current = device ?? DEFAULT_LOCATION;
   const currentSaved = saved.some(
@@ -146,115 +165,91 @@ export default function LocationsScreen() {
                 ))
               )}
 
+              <ThemedText variant="sectionH" tone="muted" style={{ marginTop: 18, marginBottom: 4 }}>
+                Add a place
+              </ThemedText>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <ThemedView
+                  tone="panel"
+                  border
+                  style={{
+                    flex: 1,
+                    borderRadius: radii.md,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: 14,
+                    gap: 8,
+                    minHeight: 48,
+                  }}
+                >
+                  <Icon name="pin" size={15} tone="muted" strokeWidth={2} />
+                  <TextInput
+                    value={query}
+                    onChangeText={setQuery}
+                    onSubmitEditing={onAddPlace}
+                    placeholder="City or landmark — e.g. Joshua Tree"
+                    placeholderTextColor={palette.faint}
+                    returnKeyType="search"
+                    autoCorrect={false}
+                    style={{ flex: 1, color: palette.text, fontSize: 15, paddingVertical: 12 }}
+                  />
+                </ThemedView>
+                <Pressable onPress={onAddPlace} disabled={searching || !query.trim()} accessibilityLabel="Add place">
+                  <ThemedView
+                    tone="accentDim"
+                    border="accent"
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: radii.md,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: searching || !query.trim() ? 0.4 : 1,
+                    }}
+                  >
+                    {searching ? (
+                      <ActivityIndicator size="small" color={palette.accent} />
+                    ) : (
+                      <Icon name="plus" size={20} tone="accent" strokeWidth={2.2} />
+                    )}
+                  </ThemedView>
+                </Pressable>
+              </View>
+              {searchError ? (
+                <ThemedText variant="fval" tone="skip" style={{ marginTop: 2 }}>
+                  {searchError}
+                </ThemedText>
+              ) : null}
+
               <Pressable
                 onPress={() => !currentSaved && addLocation(current)}
                 disabled={currentSaved}
-                style={{ marginTop: 8, opacity: currentSaved ? 0.4 : 1 }}
+                style={{ marginTop: 10, opacity: currentSaved ? 0.4 : 1 }}
               >
                 <ThemedView
-                  tone="accentDim"
-                  border="accent"
+                  tone="panel"
+                  border
                   style={{
                     borderRadius: radii.md,
-                    paddingVertical: 14,
+                    paddingVertical: 13,
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: 8,
                   }}
                 >
-                  <Icon name="plus" size={18} tone="accent" strokeWidth={2.2} />
-                  <ThemedText variant="toggle" tone="accent">
+                  <Icon name="pin" size={16} tone="muted" strokeWidth={2} />
+                  <ThemedText variant="toggle" tone="muted">
                     {currentSaved ? 'Current location saved' : 'Save current location'}
                   </ThemedText>
                 </ThemedView>
               </Pressable>
             </>
           ) : (
-            <Paywall onUnlocked={unlock} />
+            <Paywall />
           )}
         </ScrollView>
       </SafeAreaView>
-    </ThemedView>
-  );
-}
-
-function Paywall({ onUnlocked }: { onUnlocked: () => void }) {
-  const { palette } = useTheme();
-  const [busy, setBusy] = useState<'idle' | 'buy' | 'restore'>('idle');
-  const [error, setError] = useState<string | null>(null);
-
-  const run = async (which: 'buy' | 'restore') => {
-    if (busy !== 'idle') return;
-    setBusy(which);
-    setError(null);
-    const result = which === 'buy' ? await purchaseUnlock() : await restorePurchases();
-    setBusy('idle');
-    if (result.ok) onUnlocked();
-    else if (!result.cancelled) setError(result.error ?? 'Something went wrong. Please try again.');
-  };
-
-  return (
-    <ThemedView tone="panel" border style={{ borderRadius: radii.lg, padding: 20, marginTop: 18, gap: 12 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <ThemedView
-          tone="accentDim"
-          style={{ width: 38, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center' }}
-        >
-          <Icon name="lock" size={18} tone="accent" />
-        </ThemedView>
-        <ThemedText variant="nudgeTitle" tone="text" style={{ flex: 1 }}>
-          Saved locations are part of the one-time unlock
-        </ThemedText>
-      </View>
-
-      <ThemedText variant="nudgeBody" tone="muted">
-        Unlock unlimited saved locations, the multi-day best-night planner, and deep-sky
-        planning — once. No subscription, ever.
-      </ThemedText>
-
-      <Pressable onPress={() => run('buy')} disabled={busy !== 'idle'}>
-        <ThemedView
-          tone="accent"
-          style={{
-            borderRadius: radii.md,
-            paddingVertical: 14,
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: 50,
-            opacity: busy === 'buy' ? 0.85 : 1,
-          }}
-        >
-          {busy === 'buy' ? (
-            <ActivityIndicator color={palette.bg} />
-          ) : (
-            // Dark text for contrast against the accent fill.
-            <ThemedText variant="toggle" tone="bg">
-              Unlock everything · {UNLOCK_PRICE}
-            </ThemedText>
-          )}
-        </ThemedView>
-      </Pressable>
-
-      {error ? (
-        <ThemedText variant="fval" tone="skip" style={{ textAlign: 'center' }}>
-          {error}
-        </ThemedText>
-      ) : null}
-
-      <Pressable onPress={() => run('restore')} disabled={busy !== 'idle'} style={{ paddingVertical: 4 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
-          {busy === 'restore' ? <ActivityIndicator size="small" color={palette.muted} /> : null}
-          <ThemedText variant="foot" tone="muted" style={{ textAlign: 'center' }}>
-            Restore purchase
-          </ThemedText>
-        </View>
-      </Pressable>
-
-      <ThemedText variant="foot" tone="faint" style={{ textAlign: 'center' }}>
-        {/* TODO(iap): see lib/purchases.ts — wire react-native-iap / RevenueCat. */}
-        One-time purchase · stubbed for now
-      </ThemedText>
     </ThemedView>
   );
 }
