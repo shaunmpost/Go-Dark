@@ -8,6 +8,58 @@
 import * as Location from 'expo-location';
 import { Geo } from './types';
 
+/** A typeahead candidate from the geocoder — enough to show and to save. */
+export type PlaceCandidate = {
+  label: string; // "Joshua Tree"
+  sublabel: string; // "California, US"
+  latitude: number;
+  longitude: number;
+  elevationM: number;
+  utcOffsetHours: number;
+};
+
+/** Build the saveable Geo for a chosen candidate. */
+export function candidateToGeo(c: PlaceCandidate): Geo {
+  return {
+    latitude: c.latitude,
+    longitude: c.longitude,
+    elevationM: c.elevationM,
+    label: c.label,
+    utcOffsetHours: c.utcOffsetHours,
+  };
+}
+
+/**
+ * Live place search for the autocomplete. Uses Open-Meteo's free, key-less
+ * geocoding API (same provider as the weather) so typing a city, landmark, or
+ * zip surfaces matching places to pick from. Returns [] on any failure so the
+ * UI can quietly fall back to the on-device geocoder.
+ */
+export async function searchPlaces(query: string, signal?: AbortSignal): Promise<PlaceCandidate[]> {
+  const q = query.trim();
+  if (q.length < 2) return [];
+  try {
+    const url =
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}` +
+      `&count=6&language=en&format=json`;
+    const res = await fetch(url, { signal });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const results: any[] = Array.isArray(data?.results) ? data.results : [];
+    return results.map((r) => ({
+      label: r.name as string,
+      sublabel: [r.admin1, r.country_code || r.country].filter(Boolean).join(', '),
+      latitude: r.latitude as number,
+      longitude: r.longitude as number,
+      elevationM: typeof r.elevation === 'number' ? r.elevation : 0,
+      // Coarse offset from longitude (good to ~1h — enough to pick the night).
+      utcOffsetHours: Math.round((r.longitude as number) / 15),
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export async function getDeviceLocation(): Promise<Geo | null> {
   try {
     const { status } = await Location.requestForegroundPermissionsAsync();

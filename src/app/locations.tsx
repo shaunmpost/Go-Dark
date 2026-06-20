@@ -11,7 +11,13 @@ import { CloseButton } from '@/components/CloseButton';
 import { Icon } from '@/components/Icon';
 import { Paywall } from '@/components/Paywall';
 import { DEFAULT_LOCATION } from '@/config/data-sources';
-import { geocodePlace, getDeviceLocation } from '@/lib/location';
+import {
+  candidateToGeo,
+  geocodePlace,
+  getDeviceLocation,
+  PlaceCandidate,
+  searchPlaces,
+} from '@/lib/location';
 import { useStore } from '@/lib/store';
 import { radii, ThemedText, ThemedView, useTheme } from '@/lib/theme';
 import { Geo } from '@/lib/types';
@@ -98,20 +104,53 @@ export default function LocationsScreen() {
 
   // Search-and-add any place by name (not just where you are).
   const [query, setQuery] = useState('');
+  const [candidates, setCandidates] = useState<PlaceCandidate[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
-  const onAddPlace = async () => {
-    if (searching || !query.trim()) return;
+  // Live autocomplete: debounce typing, then fetch matching places.
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) {
+      setCandidates([]);
+      setSearching(false);
+      return;
+    }
     setSearching(true);
     setSearchError(null);
-    const place = await geocodePlace(query);
+    const ctrl = new AbortController();
+    const t = setTimeout(async () => {
+      const found = await searchPlaces(q, ctrl.signal);
+      setCandidates(found);
+      setSearching(false);
+    }, 300);
+    return () => {
+      clearTimeout(t);
+      ctrl.abort();
+    };
+  }, [query]);
+
+  const pickCandidate = (c: PlaceCandidate) => {
+    addLocation(candidateToGeo(c));
+    setQuery('');
+    setCandidates([]);
+    setSearchError(null);
+  };
+
+  // Fallback when nothing is picked from the list (e.g. an exact zip/landmark).
+  const onAddPlace = async () => {
+    const q = query.trim();
+    if (!q) return;
+    if (candidates.length > 0) return pickCandidate(candidates[0]);
+    setSearching(true);
+    setSearchError(null);
+    const place = await geocodePlace(q);
     setSearching(false);
     if (place) {
       addLocation(place);
       setQuery('');
     } else {
-      setSearchError("Couldn't find that place — try a city or landmark name.");
+      setSearchError("Couldn't find that place — try a city, landmark, or zip.");
     }
   };
 
@@ -209,14 +248,16 @@ export default function LocationsScreen() {
                     value={query}
                     onChangeText={setQuery}
                     onSubmitEditing={onAddPlace}
-                    placeholder="City or landmark — e.g. Joshua Tree"
+                    placeholder="City, landmark, or zip — e.g. Joshua Tree"
                     placeholderTextColor={palette.faint}
                     returnKeyType="search"
                     autoCorrect={false}
+                    autoCapitalize="words"
                     style={{ flex: 1, color: palette.text, fontSize: 15, paddingVertical: 12 }}
                   />
+                  {searching ? <ActivityIndicator size="small" color={palette.muted} /> : null}
                 </ThemedView>
-                <Pressable onPress={onAddPlace} disabled={searching || !query.trim()} accessibilityLabel="Add place">
+                <Pressable onPress={onAddPlace} disabled={!query.trim()} accessibilityLabel="Add place">
                   <View
                     style={{
                       width: 54,
@@ -227,17 +268,51 @@ export default function LocationsScreen() {
                       borderWidth: 1,
                       borderColor: palette.accent,
                       backgroundColor: palette.accentDim,
-                      opacity: searching || !query.trim() ? 0.4 : 1,
+                      opacity: !query.trim() ? 0.4 : 1,
                     }}
                   >
-                    {searching ? (
-                      <ActivityIndicator size="small" color={palette.accent} />
-                    ) : (
-                      <Icon name="plus" size={22} tone="accent" strokeWidth={2.2} />
-                    )}
+                    <Icon name="plus" size={22} tone="accent" strokeWidth={2.2} />
                   </View>
                 </Pressable>
               </View>
+
+              {/* Autocomplete results */}
+              {candidates.length > 0 ? (
+                <ThemedView
+                  tone="panel"
+                  border="hairline"
+                  style={{ borderRadius: radii.md, marginTop: 8, overflow: 'hidden' }}
+                >
+                  {candidates.map((c, i) => (
+                    <Pressable
+                      key={`${c.label}-${c.latitude}-${c.longitude}`}
+                      onPress={() => pickCandidate(c)}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 12,
+                        paddingVertical: 13,
+                        paddingHorizontal: 16,
+                        borderTopWidth: i === 0 ? 0 : 1,
+                        borderTopColor: palette.hairline,
+                      }}
+                    >
+                      <Icon name="pin" size={15} tone="muted" strokeWidth={2} />
+                      <View style={{ flex: 1 }}>
+                        <ThemedText variant="nudgeTitle" tone="text" style={{ fontSize: 15 }}>
+                          {c.label}
+                        </ThemedText>
+                        {c.sublabel ? (
+                          <ThemedText variant="fval" tone="muted" style={{ fontSize: 12.5, marginTop: 1 }}>
+                            {c.sublabel}
+                          </ThemedText>
+                        ) : null}
+                      </View>
+                      <Icon name="plus" size={16} tone="accent" strokeWidth={2.2} />
+                    </Pressable>
+                  ))}
+                </ThemedView>
+              ) : null}
               {searchError ? (
                 <ThemedText variant="fval" tone="skip" style={{ marginTop: 2 }}>
                   {searchError}
