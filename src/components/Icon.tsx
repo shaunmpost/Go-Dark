@@ -28,6 +28,10 @@ const PATHS = {
   lock: 'M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z M7 11V7a5 5 0 0 1 10 0v4',
   // Trash (remove saved location)
   trash: 'M3 6h18 M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6 M10 11v6 M14 11v6 M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2',
+  // Close (dismiss modal)
+  close: 'M18 6 6 18 M6 6l12 12',
+  // Chevron right (row affordance)
+  next: 'M9 6l6 6-6 6',
 } as const;
 
 export type IconName = keyof typeof PATHS;

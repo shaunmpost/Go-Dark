@@ -15,6 +15,38 @@ const DAY_MS = 86400000;
 const HORIZON_DAYS = 14;
 const STATE_RANK: Record<VerdictState, number> = { GO: 2, MAYBE: 1, SKIP: 0 };
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+export type PlannedNight = {
+  /** Days from now (0 = tonight). */
+  offset: number;
+  /** e.g. "Tonight", "Fri". */
+  dayLabel: string;
+  /** e.g. "Jun 21". */
+  dateLabel: string;
+  night: NightData;
+};
+
+/** The next `days` nights, each fully scored — drives the paid planner. */
+export function planNights(
+  geo: Geo,
+  forecast: WeatherForecast | null,
+  now: Date,
+  days: number = HORIZON_DAYS,
+): PlannedNight[] {
+  const out: PlannedNight[] = [];
+  for (let d = 0; d < days; d++) {
+    const when = new Date(now.getTime() + d * DAY_MS);
+    const local = new Date(when.getTime() + geo.utcOffsetHours * 3600000);
+    out.push({
+      offset: d,
+      dayLabel: d === 0 ? 'Tonight' : DAY_NAMES[local.getUTCDay()].slice(0, 3),
+      dateLabel: `${MONTHS[local.getUTCMonth()]} ${local.getUTCDate()}`,
+      night: assembleNight(geo, buildRows(geo, when), forecast, when),
+    });
+  }
+  return out;
+}
 
 export function findBestNight(
   geo: Geo,

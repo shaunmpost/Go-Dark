@@ -55,34 +55,34 @@ export function NudgeCard({ night }: { night: NightData }) {
     );
   }
 
-  // Unlocked — the full nudge.
+  // Unlocked — the full nudge, tappable through to the planner.
   return (
-    <ThemedView
-      tone="panel"
-      border
-      style={{
-        borderRadius: radii.lg,
-        paddingVertical: 18,
-        paddingHorizontal: 20,
-        flexDirection: 'row',
-        gap: 14,
-        alignItems: 'flex-start',
-      }}
-    >
-      <ThemedView
-        tone="accentDim"
-        style={{ width: 38, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center' }}
-      >
-        <Icon name="bell" size={18} tone="accent" />
+    <Pressable onPress={() => router.push('/planner')} accessibilityRole="button">
+      <ThemedView tone="panel" border style={{ borderRadius: radii.lg, padding: 18, gap: 14 }}>
+        <View style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
+          <ThemedView
+            tone="accentDim"
+            style={{ width: 38, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Icon name="bell" size={18} tone="accent" />
+          </ThemedView>
+          <View style={{ flex: 1, gap: 4 }}>
+            <ThemedText variant="nudgeTitle" tone="text">
+              {title}
+            </ThemedText>
+            <ThemedText variant="nudgeBody" tone="muted">
+              {body}
+            </ThemedText>
+          </View>
+        </View>
+        <ThemedView tone="hairline" style={{ height: 1 }} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <ThemedText variant="toggle" tone="accent">
+            See all 14 nights
+          </ThemedText>
+          <Icon name="next" size={18} tone="accent" strokeWidth={2} />
+        </View>
       </ThemedView>
-      <View style={{ flex: 1, gap: 4 }}>
-        <ThemedText variant="nudgeTitle" tone="text">
-          {title}
-        </ThemedText>
-        <ThemedText variant="nudgeBody" tone="muted">
-          {body}
-        </ThemedText>
-      </View>
-    </ThemedView>
+    </Pressable>
   );
 }

@@ -20,14 +20,14 @@ export default function UnlockScreen() {
           contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 8, paddingBottom: 56 }}
           showsVerticalScrollIndicator={false}
         >
-          <View style={{ flexDirection: 'row', marginTop: 14 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 14 }}>
             <Pressable onPress={() => router.back()} hitSlop={10} accessibilityLabel="Close">
               <ThemedView
                 tone="panel"
                 border
-                style={{ width: 42, height: 42, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' }}
+                style={{ width: 36, height: 36, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' }}
               >
-                <Icon name="back" size={20} tone="text" strokeWidth={2} />
+                <Icon name="close" size={18} tone="muted" strokeWidth={2} />
               </ThemedView>
             </Pressable>
           </View>

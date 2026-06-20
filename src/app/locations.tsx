@@ -118,19 +118,19 @@ export default function LocationsScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Header */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 14, marginBottom: 18 }}>
-            <Pressable onPress={() => router.back()} hitSlop={10} accessibilityLabel="Back">
-              <ThemedView
-                tone="panel"
-                border
-                style={{ width: 42, height: 42, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' }}
-              >
-                <Icon name="back" size={20} tone="text" strokeWidth={2} />
-              </ThemedView>
-            </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, marginBottom: 18 }}>
             <ThemedText variant="locName" tone="text" style={{ fontSize: 24, fontWeight: '700', letterSpacing: -0.5 }}>
               Locations
             </ThemedText>
+            <Pressable onPress={() => router.back()} hitSlop={10} accessibilityLabel="Close">
+              <ThemedView
+                tone="panel"
+                border
+                style={{ width: 36, height: 36, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Icon name="close" size={18} tone="muted" strokeWidth={2} />
+              </ThemedView>
+            </Pressable>
           </View>
 
           <ThemedText variant="sectionH" tone="muted" style={{ marginBottom: 4 }}>

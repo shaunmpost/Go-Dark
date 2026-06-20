@@ -15,13 +15,12 @@ import { Onboarding } from '@/components/Onboarding';
 import { Scorecard } from '@/components/Scorecard';
 import { TopBar } from '@/components/TopBar';
 import { Verdict } from '@/components/Verdict';
-import { DEFAULT_LOCATION } from '@/config/data-sources';
-import { getDeviceLocation } from '@/lib/location';
 import { liveNight, liveNightWithWeather } from '@/lib/night';
 import { MOCK_NIGHTS } from '@/lib/mock-data';
 import { useStore } from '@/lib/store';
+import { useActiveLocation } from '@/lib/use-active-location';
 import { ThemedText, ThemedView, useTheme } from '@/lib/theme';
-import { Geo, NightData } from '@/lib/types';
+import { NightData } from '@/lib/types';
 
 const PREVIEW_OPTIONS = ['GO', 'MAYBE', 'SKIP', 'LIVE'] as const;
 type PreviewKey = (typeof PREVIEW_OPTIONS)[number];
@@ -33,25 +32,10 @@ export default function TonightScreen() {
   // reference states stay available in dev via the switcher below.
   const [sel, setSel] = useState<PreviewKey>('LIVE');
 
-  // Active location: a selected saved location (unlocked) or the device's.
-  const saved = useStore((s) => s.saved);
-  const selectedId = useStore((s) => s.selectedId);
-  const isUnlocked = useStore((s) => s.isUnlocked);
+  // Active location (device, or a selected saved location when unlocked).
+  const activeLocation = useActiveLocation();
   const hasOnboarded = useStore((s) => s.hasOnboarded);
   const hydrated = useStore((s) => s._hydrated);
-  const [device, setDevice] = useState<Geo | null>(null);
-  // Hold the location prompt until onboarding has primed it.
-  useEffect(() => {
-    if (hasOnboarded) getDeviceLocation().then(setDevice).catch(() => {});
-  }, [hasOnboarded]);
-
-  const activeLocation: Geo = useMemo(() => {
-    if (isUnlocked && selectedId) {
-      const found = saved.find((l) => l.id === selectedId);
-      if (found) return found;
-    }
-    return device ?? DEFAULT_LOCATION;
-  }, [isUnlocked, selectedId, saved, device]);
 
   // Instant astronomy-only night (never blank while the forecast loads).
   const liveBase = useMemo<NightData | null>(() => {

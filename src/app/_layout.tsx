@@ -22,14 +22,13 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <ThemeProvider>
           <StatusBar style="light" />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              // Transparent so each screen's animated background shows through.
-              contentStyle: { backgroundColor: 'transparent' },
-              animation: 'fade',
-            }}
-          />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            {/* Secondary screens present as dismissable sheets (swipe down / close). */}
+            <Stack.Screen name="locations" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="unlock" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="planner" options={{ presentation: 'modal' }} />
+          </Stack>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
