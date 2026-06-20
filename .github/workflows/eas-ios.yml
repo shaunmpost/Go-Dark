@@ -1,17 +1,9 @@
 name: EAS iOS → TestFlight
 
-# Builds on every push to main that touches the app, plus a manual trigger.
+# Manual trigger only. The push trigger is paused while the EAS free-tier
+# monthly iOS build quota is exhausted (resets the 1st of the month) — re-add
+# the `push:` block below to resume auto-building on every push to main.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - 'assets/**'
-      - 'app.json'
-      - 'eas.json'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/**'
   workflow_dispatch:
     inputs:
       submit:
