@@ -29,8 +29,8 @@ export function FieldModeToggle() {
         accessibilityLabel="Field mode (night-vision red)"
         hitSlop={10}
         style={{
-          width: 50,
-          height: 50,
+          width: 46,
+          height: 46,
           borderRadius: radii.pill,
           alignItems: 'center',
           justifyContent: 'center',
@@ -39,7 +39,7 @@ export function FieldModeToggle() {
           backgroundColor: palette.panel,
         }}
       >
-        <Icon name="moon" size={20} tone="text" strokeWidth={2} />
+        <Icon name="moon" size={19} tone="text" strokeWidth={2} />
       </Pressable>
     </Animated.View>
   );

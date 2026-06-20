@@ -94,6 +94,7 @@ export type NightData = {
   moonBands: TimeBand[]; // moon above horizon
   cloudBands: TimeBand[]; // meaningful cloud cover
   coreRiseMinutes: number | null; // when the core clears the horizon
+  nowMinutes: number | null; // current time on the ribbon (null if outside 6 PM–6 AM)
   samples: RibbonSample[];
 
   /** Best upcoming night nudge (title + supporting line). */

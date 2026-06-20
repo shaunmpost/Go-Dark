@@ -198,6 +198,10 @@ export function assembleNight(
   const moonBands = allRuns(rows, (r) => r.moonAlt > 0);
   const coreRiseMinutes = crossing(rows, (r) => r.coreAlt, 0, true);
 
+  // Where "now" falls on the 6 PM–6 AM ribbon (null if outside that span).
+  const nowOffset = (now.getTime() - ribbonStart.getTime()) / 60000;
+  const nowMinutes = nowOffset >= 0 && nowOffset <= TOTAL ? Math.round(nowOffset) : null;
+
   // Cloud bands (from the forecast-driven samples) and the best window.
   const cloudBands: TimeBand[] = forecast
     ? allRuns(rows, (r) => cloudOf(r.min) >= CLOUD_LIMIT)
@@ -323,6 +327,7 @@ export function assembleNight(
     moonBands,
     cloudBands,
     coreRiseMinutes,
+    nowMinutes,
     samples,
     sky,
     bestNight: null,

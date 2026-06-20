@@ -5,15 +5,8 @@
  * window with its duration. Color keys map to the verdict state and still fade
  * with the theme.
  */
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View } from 'react-native';
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
 import { Icon } from './Icon';
 import { Starfield } from './Starfield';
 import {
@@ -33,44 +26,26 @@ const STATE_TONE: Record<VerdictState, ColorKey> = {
   SKIP: 'skip',
 };
 
-function PulsingDot({ tone }: { tone: ColorKey }) {
-  const pulse = useSharedValue(0);
-  useEffect(() => {
-    pulse.value = withRepeat(
-      withTiming(1, { duration: 1600, easing: Easing.inOut(Easing.ease) }),
-      -1,
-      true,
-    );
-  }, [pulse]);
-
-  const halo = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 + pulse.value * 1.3 }],
-    opacity: 0.35 * (1 - pulse.value) + 0.1,
-  }));
-  const haloColor = useBgColor(tone);
+/** A static status dot with a soft glow — matches the reference's
+ * `size-3 ... shadow-[0_0_12px_var(--mint)]`. */
+function StatusDot({ tone }: { tone: ColorKey }) {
   const coreColor = useBgColor(tone);
   const { palette } = useTheme();
-
   return (
-    <View style={{ width: 12, height: 12, alignItems: 'center', justifyContent: 'center' }}>
-      <Animated.View
-        style={[{ position: 'absolute', width: 12, height: 12, borderRadius: 6 }, haloColor, halo]}
-      />
-      <Animated.View
-        style={[
-          {
-            width: 12,
-            height: 12,
-            borderRadius: 6,
-            shadowColor: palette[tone],
-            shadowOpacity: 0.9,
-            shadowRadius: 6,
-            shadowOffset: { width: 0, height: 0 },
-          },
-          coreColor,
-        ]}
-      />
-    </View>
+    <View
+      style={[
+        {
+          width: 12,
+          height: 12,
+          borderRadius: 6,
+          shadowColor: palette[tone],
+          shadowOpacity: 0.95,
+          shadowRadius: 6,
+          shadowOffset: { width: 0, height: 0 },
+        },
+        coreColor,
+      ]}
+    />
   );
 }
 
@@ -120,7 +95,7 @@ export function Verdict({ night }: { night: NightData }) {
         </ThemedText>
 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <PulsingDot tone={tone} />
+          <StatusDot tone={tone} />
           <ThemedText variant="hero" tone={tone}>
             {STATE_COPY[night.state].word}
           </ThemedText>

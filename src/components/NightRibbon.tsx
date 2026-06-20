@@ -26,7 +26,7 @@ import { radii, ThemedText, ThemedView, useColorValue } from '@/lib/theme';
 import { NightData, TimeBand } from '@/lib/types';
 import { minutesToClock, RIBBON } from '@/lib/mock-data';
 
-const TRACK_H = 112;
+const TRACK_H = 128;
 const TOTAL = RIBBON.totalMinutes;
 
 const HOUR_TICKS = ['6 PM', '9 PM', '12 AM', '3 AM', '6 AM'];
@@ -46,7 +46,10 @@ function tint(hex: string, a: number): string {
 
 export function NightRibbon({ night }: { night: NightData }) {
   const [w, setW] = useState(0);
-  const initialMin = night.window ? (night.window.start + night.window.end) / 2 : 360;
+  // The marker starts at "now" (matching the reference); falls back to the
+  // window centre when the current time is outside the 6 PM–6 AM ribbon.
+  const initialMin =
+    night.nowMinutes ?? (night.window ? (night.window.start + night.window.end) / 2 : 360);
   const [readoutIdx, setReadoutIdx] = useState(() => Math.round(initialMin / RIBBON.step));
 
   const trackW = useSharedValue(0);
@@ -93,6 +96,8 @@ export function NightRibbon({ night }: { night: NightData }) {
   const sample = night.samples[readoutIdx] ?? night.samples[0];
   const coreText =
     sample.coreAlt > 0 ? `Core ${Math.round(sample.coreAlt)}° ${sample.coreDir}` : 'Core below horizon';
+  // Label the marker "NOW" while it sits at the current time (the default).
+  const atNow = night.nowMinutes != null && Math.abs(sample.minutes - night.nowMinutes) < 20;
 
   return (
     <View>
@@ -155,15 +160,22 @@ export function NightRibbon({ night }: { night: NightData }) {
               {/* Core rise marker */}
               {night.coreRiseMinutes != null && <CoreMarker left={xOf(night.coreRiseMinutes)} />}
 
-              {/* Scrub handle */}
+              {/* "Now" marker (drag to scrub; the label shows at the current time) */}
               <Animated.View
-                style={[{ position: 'absolute', top: -4, bottom: -4, width: 2, marginLeft: -1 }, handleStyle]}
+                style={[{ position: 'absolute', top: 0, bottom: 0, width: 2, marginLeft: -1 }, handleStyle]}
                 pointerEvents="none"
               >
                 <ThemedView tone="text" style={{ flex: 1 }} />
-                <View style={{ position: 'absolute', top: -5, left: -5, width: 11, height: 11 }}>
-                  <ThemedView tone="text" style={{ flex: 1, borderRadius: 6 }} />
-                </View>
+                {atNow ? (
+                  <ThemedText
+                    numberOfLines={1}
+                    variant="tick"
+                    tone="text"
+                    style={{ position: 'absolute', top: 6, left: -16, width: 34, textAlign: 'center', fontSize: 9, fontWeight: '700', letterSpacing: 1 }}
+                  >
+                    NOW
+                  </ThemedText>
+                ) : null}
               </Animated.View>
             </>
           )}

@@ -69,6 +69,7 @@ export const GO_NIGHT: NightData = {
   moonBands: [{ start: 0, end: 209 }],
   cloudBands: [{ start: 634, end: 720 }],
   coreRiseMinutes: 342,
+  nowMinutes: 155,
   sky: { atMinutes: 456, sunAlt: -30, moonUp: false, moonAlt: -12, moonAz: 250, moonIllum: 0.12, coreUp: true, coreAlt: 31, coreAz: 175, cloud: 0.04, starScore: 0.92 },
   samples: makeSamples({
     alt: sinAlt(0.475, 0.96, 33),
@@ -105,6 +106,7 @@ export const MAYBE_NIGHT: NightData = {
   moonBands: [{ start: 0, end: 480 }],
   cloudBands: [],
   coreRiseMinutes: 280,
+  nowMinutes: 155,
   sky: { atMinutes: 480, sunAlt: -30, moonUp: true, moonAlt: 34, moonAz: 150, moonIllum: 0.78, coreUp: true, coreAlt: 22, coreAz: 165, cloud: 0.08, starScore: 0.38 },
   samples: makeSamples({
     alt: sinAlt(0.389, 0.97, 30),
@@ -141,6 +143,7 @@ export const SKIP_NIGHT: NightData = {
   moonBands: [{ start: 0, end: 320 }],
   cloudBands: [{ start: 60, end: 720 }],
   coreRiseMinutes: 275,
+  nowMinutes: 155,
   sky: { atMinutes: 420, sunAlt: -30, moonUp: true, moonAlt: 26, moonAz: 200, moonIllum: 0.34, coreUp: true, coreAlt: 28, coreAz: 175, cloud: 0.85, starScore: 0.08 },
   samples: makeSamples({
     alt: sinAlt(0.382, 0.96, 31),

@@ -29,8 +29,8 @@ export function TopBar({
       >
         <View
           style={{
-            width: 50,
-            height: 50,
+            width: 46,
+            height: 46,
             borderRadius: radii.pill,
             alignItems: 'center',
             justifyContent: 'center',
@@ -39,17 +39,17 @@ export function TopBar({
             backgroundColor: palette.panel,
           }}
         >
-          <Icon name="pin" size={20} tone="accent" strokeWidth={1.9} />
+          <Icon name="pin" size={19} tone="accent" strokeWidth={1.9} />
         </View>
         <View style={{ flex: 1 }}>
-          <ThemedText variant="locLabel" tone="faint">
+          <ThemedText variant="locLabel" tone="faint" style={{ fontSize: 10, letterSpacing: 2.2 }}>
             {dateLabel} at
           </ThemedText>
           <ThemedText
             variant="locName"
             tone="text"
             numberOfLines={1}
-            style={{ fontSize: 22, fontWeight: '700', letterSpacing: -0.4, marginTop: 2 }}
+            style={{ fontSize: 16, fontWeight: '600', letterSpacing: -0.2, marginTop: 3 }}
           >
             {location}
           </ThemedText>
