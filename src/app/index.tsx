@@ -77,6 +77,24 @@ export default function TonightScreen() {
 
   return (
     <ThemedView tone="bg" style={{ flex: 1 }}>
+      {/* Sticky header — stays pinned while the page scrolls. */}
+      <View
+        style={{
+          paddingTop: insets.top + 8,
+          paddingHorizontal: 24,
+          paddingBottom: 14,
+          borderBottomWidth: 1,
+          borderBottomColor: palette.hairline,
+          backgroundColor: palette.bg,
+          zIndex: 10,
+        }}
+      >
+        <TopBar
+          dateLabel={night.dateLabel}
+          location={night.locationLabel}
+          onPressLocation={() => router.push('/locations')}
+        />
+      </View>
       <ScrollView
         contentContainerStyle={{ paddingBottom: 56 }}
         showsVerticalScrollIndicator={false}
@@ -100,14 +118,6 @@ export default function TonightScreen() {
             style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 280 }}
             pointerEvents="none"
           />
-          <View style={{ paddingTop: insets.top + 12, paddingHorizontal: 24 }}>
-            <TopBar
-              dateLabel={night.dateLabel}
-              location={night.locationLabel}
-              onPressLocation={() => router.push('/locations')}
-            />
-          </View>
-          <ThemedView tone="hairline" style={{ height: 1, marginTop: 18 }} />
           <View style={{ paddingHorizontal: 24 }}>
             <Verdict night={night} />
           </View>
