@@ -1,7 +1,17 @@
 name: EAS iOS → TestFlight
 
-# Manual trigger (from the GitHub Actions tab, works on mobile).
+# Builds on every push to main that touches the app, plus a manual trigger.
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'assets/**'
+      - 'app.json'
+      - 'eas.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/**'
   workflow_dispatch:
     inputs:
       submit:
@@ -49,8 +59,10 @@ jobs:
 
       - name: Build (and submit) iOS
         run: |
-          if [ "${{ inputs.submit }}" = "true" ]; then
-            eas build --platform ios --profile production --non-interactive --auto-submit
-          else
+          # Default to submitting (push events, or dispatch with submit=true);
+          # only skip submission when explicitly requested.
+          if [ "${{ inputs.submit }}" = "false" ]; then
             eas build --platform ios --profile production --non-interactive
+          else
+            eas build --platform ios --profile production --non-interactive --auto-submit
           fi
