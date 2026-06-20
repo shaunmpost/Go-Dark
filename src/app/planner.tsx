@@ -4,10 +4,10 @@
  * exact same scoring as the Tonight screen, so they never disagree.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Glass } from '@/components/Glass';
+import { CloseButton } from '@/components/CloseButton';
 import { Icon } from '@/components/Icon';
 import { planNights } from '@/lib/best-night';
 import { minutesToClock } from '@/lib/mock-data';
@@ -50,36 +50,32 @@ export default function PlannerScreen() {
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
         {/* Header */}
         <View style={{ paddingHorizontal: 24, paddingTop: 8 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 44 }}>
-            <ThemedText variant="locName" tone="text" style={{ fontSize: 22, fontWeight: '700', letterSpacing: -0.4 }}>
-              14-night planner
-            </ThemedText>
-            <Pressable onPress={() => router.back()} hitSlop={10} accessibilityLabel="Close">
-              <Glass
-                interactive
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: radii.pill,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  overflow: 'hidden',
-                }}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+            <View style={{ flex: 1 }}>
+              <ThemedText variant="locLabel" tone="faint">
+                Forecast
+              </ThemedText>
+              <ThemedText
+                variant="locName"
+                tone="text"
+                style={{ fontSize: 28, fontWeight: '700', letterSpacing: -0.6, marginTop: 3 }}
               >
-                <Icon name="close" size={18} tone="muted" strokeWidth={2} />
-              </Glass>
-            </Pressable>
+                14-night planner
+              </ThemedText>
+            </View>
+            <CloseButton onPress={() => router.back()} />
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2, marginBottom: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, marginBottom: 16 }}>
             <Icon name="pin" size={13} tone="muted" strokeWidth={2} opacity={0.7} />
             <ThemedText variant="fval" tone="muted">
               {geo.label}
             </ThemedText>
           </View>
         </View>
+        <ThemedView tone="hairline" style={{ height: 1 }} />
 
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 48, gap: 8 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 14, paddingBottom: 48, gap: 8 }}
           showsVerticalScrollIndicator={false}
         >
           {nights.map((p) => {
@@ -93,18 +89,18 @@ export default function PlannerScreen() {
                 border={isBest ? 'accent' : 'hairline'}
                 style={{
                   borderRadius: radii.md,
-                  paddingVertical: 14,
+                  paddingVertical: 16,
                   paddingHorizontal: 16,
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: 12,
                 }}
               >
-                <View style={{ width: 64 }}>
-                  <ThemedText variant="nudgeTitle" tone="text">
+                <View style={{ width: 78 }}>
+                  <ThemedText variant="nudgeTitle" tone="text" style={{ fontSize: 16 }}>
                     {p.dayLabel}
                   </ThemedText>
-                  <ThemedText variant="fval" tone="faint" style={{ marginTop: 1 }}>
+                  <ThemedText variant="fval" tone="faint" style={{ marginTop: 2 }}>
                     {p.dateLabel}
                   </ThemedText>
                 </View>

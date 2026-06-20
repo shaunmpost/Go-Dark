@@ -4,13 +4,13 @@
  * planning that catches the nights you'd otherwise miss.
  */
 import React from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Glass } from '@/components/Glass';
+import { CloseButton } from '@/components/CloseButton';
 import { Icon } from '@/components/Icon';
 import { Paywall } from '@/components/Paywall';
-import { radii, ThemedText, ThemedView } from '@/lib/theme';
+import { ThemedText, ThemedView } from '@/lib/theme';
 
 export default function UnlockScreen() {
   const router = useRouter();
@@ -22,21 +22,7 @@ export default function UnlockScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 14 }}>
-            <Pressable onPress={() => router.back()} hitSlop={10} accessibilityLabel="Close">
-              <Glass
-                interactive
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: radii.pill,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  overflow: 'hidden',
-                }}
-              >
-                <Icon name="close" size={18} tone="muted" strokeWidth={2} />
-              </Glass>
-            </Pressable>
+            <CloseButton onPress={() => router.back()} />
           </View>
 
           <View style={{ alignItems: 'center', marginTop: 18, marginBottom: 26 }}>
