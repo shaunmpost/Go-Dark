@@ -11,6 +11,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import { Glass } from './Glass';
 import { Icon } from './Icon';
 import { ColorKey, radii, ThemedText, ThemedView } from '@/lib/theme';
 import { Factor } from '@/lib/types';
@@ -92,9 +93,7 @@ export function Scorecard({ factors }: { factors: Factor[] }) {
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
       >
-        <ThemedView
-          tone="panel"
-          border
+        <Glass
           style={{
             borderRadius: radii.md,
             paddingVertical: 17,
@@ -102,6 +101,7 @@ export function Scorecard({ factors }: { factors: Factor[] }) {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
+            overflow: 'hidden',
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 11 }}>
@@ -113,7 +113,7 @@ export function Scorecard({ factors }: { factors: Factor[] }) {
           <Animated.View style={chevronStyle}>
             <Icon name="chevron" size={18} tone="muted" />
           </Animated.View>
-        </ThemedView>
+        </Glass>
       </Pressable>
 
       {/* Animated viewport */}

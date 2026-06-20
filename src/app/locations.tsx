@@ -3,15 +3,18 @@
  * always available (free tier). Saved locations and switching between them are
  * part of the one-time unlock; locked users see the gate.
  */
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, TextInput, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Glass } from '@/components/Glass';
 import { Icon } from '@/components/Icon';
 import { Paywall } from '@/components/Paywall';
+import { pickSky } from '@/components/SkyScene';
 import { DEFAULT_LOCATION } from '@/config/data-sources';
 import { geocodePlace, getDeviceLocation } from '@/lib/location';
+import { snapshotFor } from '@/lib/night';
 import { useStore } from '@/lib/store';
 import { radii, ThemedText, ThemedView, useTheme } from '@/lib/theme';
 import { Geo } from '@/lib/types';
@@ -20,55 +23,74 @@ function coords(g: Geo) {
   return `${g.latitude.toFixed(2)}°, ${g.longitude.toFixed(2)}°`;
 }
 
+/** A location card showing that place's own sky (à la Apple Weather's city list). */
 function LocationRow({
+  geo,
   label,
   sub,
   selected,
   onSelect,
   onRemove,
 }: {
+  geo: Geo;
   label: string;
   sub: string;
   selected: boolean;
   onSelect: () => void;
   onRemove?: () => void;
 }) {
+  const { palette } = useTheme();
+  const img = useMemo(() => pickSky(snapshotFor(geo)), [geo.latitude, geo.longitude, geo.utcOffsetHours]);
+
   return (
-    <ThemedView
-      tone="panel"
-      border
+    <View
       style={{
         borderRadius: radii.md,
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
+        overflow: 'hidden',
+        height: 78,
+        borderWidth: 1,
+        borderColor: selected ? palette.accent : palette.hairline,
       }}
     >
-      <Pressable onPress={onSelect} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <ThemedView
-          tone={selected ? 'accentDim' : undefined}
-          border={selected ? 'accent' : 'hairline'}
-          style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}
-        >
-          {selected ? <Icon name="check" size={14} tone="accent" strokeWidth={2.6} /> : null}
-        </ThemedView>
-        <View style={{ flex: 1 }}>
-          <ThemedText variant="nudgeTitle" tone="text">
-            {label}
-          </ThemedText>
-          <ThemedText variant="fval" tone="faint" style={{ marginTop: 2 }}>
-            {sub}
-          </ThemedText>
-        </View>
-      </Pressable>
-      {onRemove ? (
-        <Pressable onPress={onRemove} hitSlop={10} accessibilityLabel={`Remove ${label}`}>
-          <Icon name="trash" size={18} tone="muted" strokeWidth={1.8} />
+      <Image source={img} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      <LinearGradient
+        colors={['rgba(6,7,14,0.30)', 'rgba(6,7,14,0.72)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 }}>
+        <Pressable onPress={onSelect} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: 12,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 1.5,
+              borderColor: selected ? palette.accent : 'rgba(255,255,255,0.5)',
+              backgroundColor: selected ? palette.accentDim : 'transparent',
+            }}
+          >
+            {selected ? <Icon name="check" size={14} tone="accent" strokeWidth={2.6} /> : null}
+          </View>
+          <View style={{ flex: 1 }}>
+            <ThemedText variant="nudgeTitle" tone="text">
+              {label}
+            </ThemedText>
+            <ThemedText variant="fval" tone="text" style={{ marginTop: 2, opacity: 0.7 }}>
+              {sub}
+            </ThemedText>
+          </View>
         </Pressable>
-      ) : null}
-    </ThemedView>
+        {onRemove ? (
+          <Pressable onPress={onRemove} hitSlop={10} accessibilityLabel={`Remove ${label}`}>
+            <Icon name="trash" size={18} tone="text" strokeWidth={1.8} opacity={0.7} />
+          </Pressable>
+        ) : null}
+      </View>
+    </View>
   );
 }
 
@@ -144,6 +166,7 @@ export default function LocationsScreen() {
             Current
           </ThemedText>
           <LocationRow
+            geo={current}
             label={current.label}
             sub={device ? coords(current) : `${coords(current)} · default`}
             selected={selectedId == null}
@@ -163,6 +186,7 @@ export default function LocationsScreen() {
                 saved.map((l) => (
                   <LocationRow
                     key={l.id}
+                    geo={l}
                     label={l.label}
                     sub={coords(l)}
                     selected={selectedId === l.id}
@@ -176,9 +200,7 @@ export default function LocationsScreen() {
                 Add a place
               </ThemedText>
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <ThemedView
-                  tone="panel"
-                  border
+                <Glass
                   style={{
                     flex: 1,
                     borderRadius: radii.md,
@@ -187,6 +209,7 @@ export default function LocationsScreen() {
                     paddingHorizontal: 14,
                     gap: 8,
                     minHeight: 48,
+                    overflow: 'hidden',
                   }}
                 >
                   <Icon name="pin" size={15} tone="muted" strokeWidth={2} />
@@ -200,7 +223,7 @@ export default function LocationsScreen() {
                     autoCorrect={false}
                     style={{ flex: 1, color: palette.text, fontSize: 15, paddingVertical: 12 }}
                   />
-                </ThemedView>
+                </Glass>
                 <Pressable onPress={onAddPlace} disabled={searching || !query.trim()} accessibilityLabel="Add place">
                   <ThemedView
                     tone="accentDim"

@@ -15,7 +15,7 @@ const OVERCAST = require('../../assets/images/sky/overcast.jpg');
 const TWILIGHT = require('../../assets/images/sky/twilight.jpg');
 
 /** Pick the sky image that best matches the snapshot. */
-function pickSky(s: SkySnapshot): ImageSourcePropType {
+export function pickSky(s: SkySnapshot): ImageSourcePropType {
   if (s.sunAlt > -12) return TWILIGHT; // still twilight / dusk
   if (s.cloud >= 0.65) return OVERCAST;
   if (s.cloud >= 0.3) return PARTLY;

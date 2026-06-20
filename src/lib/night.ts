@@ -13,11 +13,16 @@
 import { assembleNight, buildRows } from './astro';
 import { findBestNight } from './best-night';
 import { getForecast } from './weather';
-import { Geo, NightData } from './types';
+import { Geo, NightData, SkySnapshot } from './types';
 
 export function liveNight(geo: Geo, now: Date = new Date()): NightData {
   const night = assembleNight(geo, buildRows(geo, now), null, now);
   return { ...night, bestNight: findBestNight(geo, null, now) };
+}
+
+/** Just tonight's sky snapshot for a location (astronomy-only, fast). */
+export function snapshotFor(geo: Geo, now: Date = new Date()): SkySnapshot {
+  return assembleNight(geo, buildRows(geo, now), null, now).sky;
 }
 
 export async function liveNightWithWeather(geo: Geo, now: Date = new Date()): Promise<NightData> {

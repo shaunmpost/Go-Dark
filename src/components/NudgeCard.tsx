@@ -9,6 +9,7 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Glass } from './Glass';
 import { Icon } from './Icon';
 import { UNLOCK_PRICE } from '@/lib/purchases';
 import { useStore } from '@/lib/store';
@@ -25,7 +26,7 @@ export function NudgeCard({ night }: { night: NightData }) {
     // Locked teaser — shows that a better night exists, gates the payoff.
     return (
       <Pressable onPress={() => router.push('/unlock')} accessibilityRole="button">
-        <ThemedView tone="panel" border style={{ borderRadius: radii.lg, padding: 18, gap: 14 }}>
+        <Glass style={{ borderRadius: radii.lg, padding: 18, gap: 14, overflow: 'hidden' }}>
           <View style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
             <ThemedView
               tone="accentDim"
@@ -50,7 +51,7 @@ export function NudgeCard({ night }: { night: NightData }) {
               Unlock planning · {UNLOCK_PRICE}
             </ThemedText>
           </ThemedView>
-        </ThemedView>
+        </Glass>
       </Pressable>
     );
   }
@@ -58,7 +59,7 @@ export function NudgeCard({ night }: { night: NightData }) {
   // Unlocked — the full nudge, tappable through to the planner.
   return (
     <Pressable onPress={() => router.push('/planner')} accessibilityRole="button">
-      <ThemedView tone="panel" border style={{ borderRadius: radii.lg, padding: 18, gap: 14 }}>
+      <Glass style={{ borderRadius: radii.lg, padding: 18, gap: 14, overflow: 'hidden' }}>
         <View style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
           <ThemedView
             tone="accentDim"
@@ -82,7 +83,7 @@ export function NudgeCard({ night }: { night: NightData }) {
           </ThemedText>
           <Icon name="next" size={18} tone="accent" strokeWidth={2} />
         </View>
-      </ThemedView>
+      </Glass>
     </Pressable>
   );
 }
