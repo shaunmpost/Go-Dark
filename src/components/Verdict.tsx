@@ -14,7 +14,7 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
+import { Glass } from './Glass';
 import { Icon } from './Icon';
 import {
   ColorKey,
@@ -33,26 +33,6 @@ const STATE_TONE: Record<VerdictState, ColorKey> = {
   MAYBE: 'amber',
   SKIP: 'skip',
 };
-
-function HeroGlow({ tone }: { tone: ColorKey }) {
-  const c = useColorValue(tone === 'accent' ? 'accentDim' : tone);
-  return (
-    <View
-      pointerEvents="none"
-      style={{ position: 'absolute', top: -30, left: '50%', marginLeft: -150, width: 300, height: 300 }}
-    >
-      <Svg width={300} height={300}>
-        <Defs>
-          <RadialGradient id="heroGlow" cx="50%" cy="50%" r="50%">
-            <Stop offset="0%" stopColor={c} stopOpacity={tone === 'accent' ? 1 : 0.5} />
-            <Stop offset="68%" stopColor={c} stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
-        <Rect width={300} height={300} fill="url(#heroGlow)" />
-      </Svg>
-    </View>
-  );
-}
 
 function PulsingDot({ tone }: { tone: ColorKey }) {
   const pulse = useSharedValue(0);
@@ -82,25 +62,23 @@ function PulsingDot({ tone }: { tone: ColorKey }) {
 }
 
 function ConfidenceChip({ confidence, tone }: { confidence: NightData['confidence']; tone: ColorKey }) {
-  const isGo = tone === 'accent';
   return (
-    <ThemedView
-      tone={isGo ? 'accentDim' : 'panel'}
-      border={isGo ? undefined : 'hairline'}
+    <Glass
       style={{
         flexDirection: 'row',
         alignItems: 'center',
         gap: 7,
         paddingHorizontal: 13,
-        paddingVertical: 6,
+        paddingVertical: 7,
         borderRadius: radii.pill,
+        overflow: 'hidden',
       }}
     >
       <Icon name={confidence === 'High' ? 'check' : 'info'} size={13} tone={tone} strokeWidth={2.4} />
       <ThemedText variant="conf" tone={tone}>
         {confidence} confidence
       </ThemedText>
-    </ThemedView>
+    </Glass>
   );
 }
 

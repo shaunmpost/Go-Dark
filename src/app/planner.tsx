@@ -7,6 +7,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Glass } from '@/components/Glass';
 import { Icon } from '@/components/Icon';
 import { planNights } from '@/lib/best-night';
 import { minutesToClock } from '@/lib/mock-data';
@@ -54,13 +55,19 @@ export default function PlannerScreen() {
               14-night planner
             </ThemedText>
             <Pressable onPress={() => router.back()} hitSlop={10} accessibilityLabel="Close">
-              <ThemedView
-                tone="panel"
-                border
-                style={{ width: 36, height: 36, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' }}
+              <Glass
+                interactive
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: radii.pill,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                }}
               >
                 <Icon name="close" size={18} tone="muted" strokeWidth={2} />
-              </ThemedView>
+              </Glass>
             </Pressable>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2, marginBottom: 8 }}>

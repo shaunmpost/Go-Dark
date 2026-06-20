@@ -7,6 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Glass } from '@/components/Glass';
 import { Icon } from '@/components/Icon';
 import { Paywall } from '@/components/Paywall';
 import { DEFAULT_LOCATION } from '@/config/data-sources';
@@ -123,13 +124,19 @@ export default function LocationsScreen() {
               Locations
             </ThemedText>
             <Pressable onPress={() => router.back()} hitSlop={10} accessibilityLabel="Close">
-              <ThemedView
-                tone="panel"
-                border
-                style={{ width: 36, height: 36, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' }}
+              <Glass
+                interactive
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: radii.pill,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                }}
               >
                 <Icon name="close" size={18} tone="muted" strokeWidth={2} />
-              </ThemedView>
+              </Glass>
             </Pressable>
           </View>
 

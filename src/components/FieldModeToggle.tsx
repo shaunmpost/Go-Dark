@@ -10,8 +10,9 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import { Glass } from './Glass';
 import { Icon } from './Icon';
-import { radii, ThemedView, useTheme } from '@/lib/theme';
+import { radii, useTheme } from '@/lib/theme';
 
 export function FieldModeToggle() {
   const { toggleFieldMode, fieldMode } = useTheme();
@@ -29,19 +30,19 @@ export function FieldModeToggle() {
         accessibilityLabel="Field mode (night-vision red)"
         hitSlop={10}
       >
-        <ThemedView
-          tone="panel"
-          border
+        <Glass
+          interactive
           style={{
             width: 42,
             height: 42,
             borderRadius: radii.pill,
             alignItems: 'center',
             justifyContent: 'center',
+            overflow: 'hidden',
           }}
         >
           <Icon name="moon" size={19} tone="text" strokeWidth={2} />
-        </ThemedView>
+        </Glass>
       </Pressable>
     </Animated.View>
   );
