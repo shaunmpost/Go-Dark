@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Stack } from 'expo-router';
@@ -21,7 +21,7 @@ import { checkEntitlement, initPurchases } from '@/lib/purchases';
 import { useStore } from '@/lib/store';
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
@@ -30,6 +30,16 @@ export default function RootLayout() {
     SpaceGrotesk_600SemiBold,
     SpaceGrotesk_700Bold,
   });
+
+  // Never block forever on fonts: render once they load, error, or after a
+  // short grace period (custom fonts swap in when ready; otherwise we fall
+  // back to system fonts rather than showing a blank screen — important on web).
+  const [graceElapsed, setGraceElapsed] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setGraceElapsed(true), 1500);
+    return () => clearTimeout(t);
+  }, []);
+  const ready = fontsLoaded || !!fontError || graceElapsed;
 
   // Re-grant the one-time unlock from the store on launch (e.g. after a
   // reinstall) without requiring a tap. Never revokes — only grants.
@@ -40,8 +50,9 @@ export default function RootLayout() {
     })();
   }, []);
 
-  // Hold on a dark canvas until the type is ready, to avoid a font swap flash.
-  if (!fontsLoaded) {
+  // Hold briefly on a dark canvas to avoid a font swap flash — but never longer
+  // than the grace period above.
+  if (!ready) {
     return <View style={{ flex: 1, backgroundColor: '#06070e' }} />;
   }
 
