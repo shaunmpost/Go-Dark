@@ -26,13 +26,23 @@ import { NightData } from '@/lib/types';
 const PREVIEW_OPTIONS = ['GO', 'MAYBE', 'SKIP', 'LIVE'] as const;
 type PreviewKey = (typeof PREVIEW_OPTIONS)[number];
 
+/** Web-only `?demo=GO|MAYBE|SKIP` deep link — renders a populated reference
+ * night (handy for sharing a live preview and for marketing screenshots). */
+function demoState(): PreviewKey | null {
+  if (typeof window === 'undefined') return null;
+  const d = new URLSearchParams(window.location.search).get('demo')?.toUpperCase();
+  return d === 'GO' || d === 'MAYBE' || d === 'SKIP' ? d : null;
+}
+
 export default function TonightScreen() {
   const { palette } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   // Production shows the real, computed night. The GO/MAYBE/SKIP mock-exact
-  // reference states stay available in dev via the switcher below.
-  const [sel, setSel] = useState<PreviewKey>('LIVE');
+  // reference states stay available in dev via the switcher below, or via the
+  // `?demo=` deep link on web.
+  const demo = demoState();
+  const [sel, setSel] = useState<PreviewKey>(demo ?? 'LIVE');
 
   // Active location (device, or a selected saved location when unlocked).
   const activeLocation = useActiveLocation();
@@ -73,7 +83,7 @@ export default function TonightScreen() {
 
   // Wait for persisted state, then show onboarding once before the app.
   if (!hydrated) return <ThemedView tone="bg" style={{ flex: 1 }} />;
-  if (!hasOnboarded) return <Onboarding />;
+  if (!hasOnboarded && !demo) return <Onboarding />;
 
   return (
     <ThemedView tone="bg" style={{ flex: 1 }}>
